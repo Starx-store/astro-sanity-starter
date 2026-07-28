@@ -22,6 +22,11 @@ type PkgRow = {
   costPrice: string;
   quantity?: string;
   ratePer1000?: string;
+  packageType?: "fixed" | "quantity";
+  pricePer1000?: string;
+  traderPricePer1000?: string;
+  minQty?: string;
+  maxQty?: string;
   isAvailable: boolean;
   sortOrder: number;
   providerId: string | null;

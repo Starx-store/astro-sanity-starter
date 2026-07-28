@@ -227,6 +227,10 @@ export default async function ProductPage(
                     salePrice:
                       myPrices.find((c) => c.packageId === p.id)?.price ??
                       (isTrader && p.traderPrice ? p.traderPrice : p.salePrice),
+                    packageType: (p.packageType as "fixed" | "quantity") ?? "fixed",
+                    pricePer1000: isTrader && p.traderPricePer1000 ? p.traderPricePer1000 : p.pricePer1000,
+                    minQty: p.minQty ? displayAmount(p.minQty) : "1",
+                    maxQty: p.maxQty ? displayAmount(p.maxQty) : null,
                   }))}
                   qty={
                     qtyCfg

@@ -78,6 +78,10 @@ type Pkg = {
   name: string;
   description: string | null;
   salePrice: string;
+  packageType?: "fixed" | "quantity";
+  pricePer1000?: string | null;
+  minQty?: string | null;
+  maxQty?: string | null;
 };
 
 type QtyInfo = {
@@ -121,11 +125,22 @@ export function OrderBox(props: {
   const [errCode, setErrCode] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
 
+  const selectedPkg = useMemo(
+    () => props.packages.find((p) => p.id === packageId),
+    [props.packages, packageId],
+  );
+
   /** معاينة السعر (عرض فقط — الحساب النهائي من الخادم دائمًا). */
   const preview = useMemo(() => {
     if (props.productType === "package") {
-      const pkg = props.packages.find((p) => p.id === packageId);
-      return pkg ? Number(pkg.salePrice) : null;
+      if (!selectedPkg) return null;
+      if (selectedPkg.packageType === "quantity") {
+        const q = Number(quantity);
+        if (!quantity || Number.isNaN(q) || q <= 0) return null;
+        const p1000 = Number(selectedPkg.pricePer1000 || selectedPkg.salePrice);
+        return (p1000 * q) / 1000;
+      }
+      return Number(selectedPkg.salePrice);
     }
     const q = Number(quantity);
     if (!props.qty || !quantity || Number.isNaN(q) || q <= 0) return null;
@@ -138,7 +153,7 @@ export function OrderBox(props: {
     if (unit === null && props.qty.pricePerUnit) unit = Number(props.qty.pricePerUnit);
     if (unit === null && props.qty.pricePer1000) unit = Number(props.qty.pricePer1000) / 1000;
     return unit === null ? null : unit * q;
-  }, [props, packageId, quantity]);
+  }, [props.productType, props.qty, selectedPkg, quantity]);
 
   const balance = props.availableBalance ? Number(props.availableBalance) : null;
   const after = balance !== null && preview !== null ? balance - preview : null;
@@ -158,46 +173,69 @@ export function OrderBox(props: {
     setErrors({});
     setErrCode(null);
 
-    const res = await apiPost<{ order: { id: string } }>("/api/orders", {
+    const res = await apiPost<{ orderNo: string }>("/api/orders", {
       productId: props.productId,
       packageId: props.productType === "package" ? packageId : undefined,
-      quantity: props.productType === "quantity" ? quantity.trim() : undefined,
+      quantity:
+        props.productType === "quantity" || selectedPkg?.packageType === "quantity"
+          ? quantity
+          : undefined,
       inputs,
-      idempotencyKey: idemKey,
       couponCode: couponCode.trim() || undefined,
+      idempotencyKey: idemKey,
     });
     setLoading(false);
 
     if (res.ok) {
-      router.push(`/orders/${res.data.order.id}`);
-      router.refresh();
+      router.push(`/orders?created=${res.data.orderNo}`);
     } else {
-      setErrCode(res.code ?? null);
-      if (res.fieldErrors) {
-        setErrors(res.fieldErrors);
-        setConfirming(false);
-      }
+      if (res.fieldErrors) setErrors(res.fieldErrors);
       setFormError(res.error);
+      setErrCode(res.code ?? null);
     }
   }
 
-  const selectedPkg = props.packages.find((p) => p.id === packageId);
+  if (!props.orderable) {
+    return (
+      <Alert tone="warning" title={t.unavailable}>
+        {t.unavailable}
+      </Alert>
+    );
+  }
 
   return (
-    <div className="space-y-5">
-      {/* اختيار البكج */}
+    <div className="space-y-4">
+      {formError && (
+        <Alert tone="danger" className="text-xs">
+          {formError}
+          {errCode === "insufficient_balance" && props.isLoggedIn && (
+            <div className="mt-2">
+              <Link
+                href="/wallet"
+                className="font-bold underline hover:text-gold"
+              >
+                {t.topUp} 👈
+              </Link>
+            </div>
+          )}
+        </Alert>
+      )}
+
+      {/* قائمة البكجات */}
       {props.productType === "package" && (
         <div className="space-y-2">
-          <p className="text-sm font-medium">{t.choosePkg}</p>
-          {errors.packageId && (
-            <p className="text-xs font-medium text-danger">{errors.packageId}</p>
-          )}
-          <div className="grid gap-2 sm:grid-cols-2">
+          <label className="text-xs font-medium text-muted">{t.choosePkg}</label>
+          <div className="grid gap-2">
             {props.packages.map((p) => (
               <button
                 key={p.id}
                 type="button"
-                onClick={() => setPackageId(p.id)}
+                onClick={() => {
+                  setPackageId(p.id);
+                  if (p.packageType === "quantity" && !quantity) {
+                    setQuantity(p.minQty ?? "1000");
+                  }
+                }}
                 className={cn(
                   "rounded-lg border p-4 text-right transition-colors",
                   packageId === p.id
@@ -212,7 +250,9 @@ export function OrderBox(props: {
                   </span>
                 )}
                 <span className="mt-2 block font-extrabold text-gold" dir="ltr">
-                  {fmt(Number(p.salePrice))}$
+                  {p.packageType === "quantity"
+                    ? `${fmt(Number(p.pricePer1000 || p.salePrice))}$ / 1000`
+                    : `${fmt(Number(p.salePrice))}$`}
                 </span>
               </button>
             ))}
@@ -220,7 +260,26 @@ export function OrderBox(props: {
         </div>
       )}
 
-      {/* إدخال الكمية */}
+      {/* إدخال الكمية لبكج فرعي يعتمد الكمية */}
+      {props.productType === "package" && selectedPkg?.packageType === "quantity" && (
+        <Field
+          label={t.qty}
+          htmlFor="package-quantity"
+          error={errors.quantity}
+          hint={t.qtyHint(selectedPkg.minQty || "1", selectedPkg.maxQty || null)}
+        >
+          <Input
+            id="package-quantity"
+            inputMode="decimal"
+            dir="ltr"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            invalid={!!errors.quantity}
+          />
+        </Field>
+      )}
+
+      {/* إدخال الكمية لمنتج كامل من نوع كمية */}
       {props.productType === "quantity" && props.qty && (
         <Field
           label={t.qtyLabel(props.qty.unit)}

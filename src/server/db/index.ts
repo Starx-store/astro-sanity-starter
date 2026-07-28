@@ -65,8 +65,15 @@ if (process.env.NODE_ENV !== "production") {
   globalForDb.__evoSql = client;
 }
 
-// ensure product_packages quantity column exists
-client`ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS quantity numeric(18,4) DEFAULT '1';`.catch(() => {});
+// ensure product_packages quantity & sub-package type columns exist
+client`
+  ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS quantity numeric(18,4) DEFAULT '1';
+  ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS package_type text DEFAULT 'fixed';
+  ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS price_per_1000 numeric(18,4);
+  ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS trader_price_per_1000 numeric(18,4);
+  ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS min_qty numeric(18,4) DEFAULT '1';
+  ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS max_qty numeric(18,4);
+`.catch(() => {});
 
 export const db = drizzle(client, { schema });
 export { schema };

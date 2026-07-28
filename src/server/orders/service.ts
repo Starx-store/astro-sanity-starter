@@ -165,6 +165,58 @@ async function priceOrder(input: {
         packageId: "البكج غير متاح — اختر غيره",
       });
     }
+    if (pkg.packageType === "quantity") {
+      if (!input.quantity) {
+        throw new AppError("quantity_required", "أدخل الكمية.", 422, {
+          quantity: "أدخل الكمية",
+        });
+      }
+      const qty = parseQty(input.quantity);
+      const minQty = parseQty(pkg.minQty || "1");
+      const maxQty = pkg.maxQty ? parseQty(pkg.maxQty) : null;
+      if (qty < minQty) {
+        throw new AppError("qty_below_min", "الكمية أقل من الحد الأدنى.", 422, {
+          quantity: `الحد الأدنى ${displayAmount(pkg.minQty || "1")}`,
+        });
+      }
+      if (maxQty !== null && qty > maxQty) {
+        throw new AppError("qty_above_max", "الكمية أكبر من الحد الأقصى.", 422, {
+          quantity: `الحد الأقصى ${displayAmount(pkg.maxQty!)}`,
+        });
+      }
+
+      const p1000 =
+        isTrader && pkg.traderPricePer1000
+          ? pkg.traderPricePer1000
+          : pkg.pricePer1000 || pkg.salePrice;
+
+      let unitPrice = per1000ToUnit(parseAmount(p1000));
+      if (unitPrice <= 0n) {
+        unitPrice = parseAmount(pkg.salePrice);
+      }
+      if (discountPct > 0 && !(isTrader && pkg.traderPricePer1000)) {
+        unitPrice = applyPercentDiscount(unitPrice, discountPct);
+      }
+
+      const total = mulAmountByQty(unitPrice, qty);
+      if (total <= 0n) {
+        throw new AppError("total_too_small", "إجمالي الطلب صغير جدًا.", 422);
+      }
+
+      const costUnit = per1000ToUnit(parseAmount(pkg.costPrice || "0"));
+      const cost = costUnit > 0n ? mulAmountByQty(costUnit, qty) : parseAmount(pkg.costPrice || "0");
+
+      return {
+        product,
+        packageId: pkg.id,
+        quantity4: qty,
+        unit: null,
+        unitPrice,
+        total,
+        cost,
+      };
+    }
+
     let price: bigint;
     const customPkg = customPrices.find((c) => c.packageId === pkg.id);
     if (customPkg) {
@@ -183,10 +235,12 @@ async function priceOrder(input: {
     if (price <= 0n) {
       throw new AppError("total_too_small", "إجمالي الطلب صغير جدًا.", 422);
     }
+
+    const fixedQty = parseQty(pkg.quantity || "1");
     return {
       product,
       packageId: pkg.id,
-      quantity4: null,
+      quantity4: fixedQty > 0n ? fixedQty : null,
       unit: null,
       unitPrice: price,
       total: price,

@@ -491,7 +491,11 @@ export const productPackages = pgTable(
     salePrice: money("sale_price").notNull(),
     // السعر الخاص بباقة التاجر (اختياري) — سعر مستقل، ليس نسبة خصم.
     traderPrice: money("trader_price"),
-    costPrice: money("cost_price").notNull().default("0"),
+    packageType: text("package_type").notNull().default("fixed"), // fixed | quantity
+    pricePer1000: money("price_per_1000"),
+    traderPricePer1000: money("trader_price_per_1000"),
+    minQty: numeric("min_qty", { precision: 18, scale: 4 }).default("1"),
+    maxQty: numeric("max_qty", { precision: 18, scale: 4 }),
     quantity: numeric("quantity", { precision: 18, scale: 4 }).default("1"),
     options: jsonb("options"), // مدة/منطقة/نوع حساب
     isAvailable: boolean("is_available").notNull().default(true),
