@@ -20,6 +20,7 @@ type PkgRow = {
   salePrice: string;
   traderPrice: string;
   costPrice: string;
+  quantity?: string;
   isAvailable: boolean;
   sortOrder: number;
   providerId: string | null;
@@ -503,6 +504,24 @@ export function ProductForm({
                     />
                   </Field>
                 </div>
+                <div className="sm:col-span-2">
+                  <Field label="الكمية للمزوّد">
+                    <Input
+                      dir="ltr"
+                      inputMode="numeric"
+                      placeholder="مثال: 1000"
+                      value={p.quantity ?? "1"}
+                      onChange={(e) =>
+                        set(
+                          "packages",
+                          f.packages.map((x, j) =>
+                            j === i ? { ...x, quantity: e.target.value } : x,
+                          ),
+                        )
+                      }
+                    />
+                  </Field>
+                </div>
                 <div className="flex items-end gap-2 sm:col-span-2">
                   <label className="flex h-11 items-center gap-2 text-sm">
                     <input
@@ -591,6 +610,9 @@ export function ProductForm({
                           providerId={p.providerId}
                           currentServiceId={p.externalProductId}
                           onSelect={(svc) => {
+                            const pkgQty = Number(p.quantity || "1") || 1;
+                            const rate1000 = Number(svc.ratePer1000) || 0;
+                            const calcCost = rate1000 > 0 ? ((rate1000 * pkgQty) / 1000).toFixed(4) : svc.ratePer1000;
                             set(
                               "packages",
                               f.packages.map((x, j) =>
@@ -598,7 +620,7 @@ export function ProductForm({
                                   ? {
                                       ...x,
                                       externalProductId: svc.externalId,
-                                      costPrice: x.costPrice || svc.ratePer1000 || "0",
+                                      costPrice: calcCost || "0",
                                     }
                                   : x,
                               ),

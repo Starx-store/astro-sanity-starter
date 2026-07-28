@@ -80,6 +80,7 @@ export const packageRowSchema = z.object({
   // السعر الخاص بباقة التاجر (اختياري) — سعر مستقل وليس خصمًا.
   traderPrice: posAmountField.optional().or(z.literal("")),
   costPrice: nonNegAmountField.default("0"),
+  quantity: qtyField.optional().or(z.literal("")).default("1"),
   isAvailable: z.boolean().default(true),
   sortOrder: z.coerce.number().int().min(0).max(9999).default(0),
   providerId: optionalUuid,

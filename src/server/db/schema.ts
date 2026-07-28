@@ -492,6 +492,7 @@ export const productPackages = pgTable(
     // السعر الخاص بباقة التاجر (اختياري) — سعر مستقل، ليس نسبة خصم.
     traderPrice: money("trader_price"),
     costPrice: money("cost_price").notNull().default("0"),
+    quantity: numeric("quantity", { precision: 18, scale: 4 }).default("1"),
     options: jsonb("options"), // مدة/منطقة/نوع حساب
     isAvailable: boolean("is_available").notNull().default(true),
     sortOrder: integer("sort_order").notNull().default(0),

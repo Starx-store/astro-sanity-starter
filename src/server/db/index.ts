@@ -65,6 +65,9 @@ if (process.env.NODE_ENV !== "production") {
   globalForDb.__evoSql = client;
 }
 
+// ensure product_packages quantity column exists
+client`ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS quantity numeric(18,4) DEFAULT '1';`.catch(() => {});
+
 export const db = drizzle(client, { schema });
 export { schema };
 export type Database = typeof db;

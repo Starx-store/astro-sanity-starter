@@ -123,6 +123,7 @@ export default async function EditProductPage(
             salePrice: displayAmount(p.salePrice),
             traderPrice: p.traderPrice ? displayAmount(p.traderPrice) : "",
             costPrice: displayAmount(p.costPrice),
+            quantity: p.quantity ? displayAmount(p.quantity) : "1",
             isAvailable: p.isAvailable,
             sortOrder: p.sortOrder,
             providerId: p.providerId,

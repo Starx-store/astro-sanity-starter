@@ -148,6 +148,7 @@ async function syncChildren(
         salePrice: p.salePrice,
         traderPrice: p.traderPrice?.trim() ? p.traderPrice : null,
         costPrice: p.costPrice || "0",
+        quantity: p.quantity || "1",
         isAvailable: p.isAvailable,
         sortOrder: p.sortOrder,
         providerId: p.providerId || null,
