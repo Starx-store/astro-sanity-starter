@@ -134,54 +134,59 @@ const categoryIcons = [Gamepad2, Share2, CreditCard, Package];
 
 /** أحدث المنتجات المتاحة + أدنى سعر لكل منتج (يبدأ من). */
 async function getShowcase(isTrader: boolean) {
-  const items = await db
-    .select({ p: products, categoryName: categoriesTable.name })
-    .from(products)
-    .innerJoin(categoriesTable, eq(products.categoryId, categoriesTable.id))
-    .where(
-      and(
-        ne(products.status, "hidden"),
-        eq(categoriesTable.isVisible, true),
-        isTrader ? undefined : eq(products.traderOnly, false),
-      ),
-    )
-    .orderBy(asc(products.sortOrder), asc(products.name))
-    .limit(8);
-
-  const ids = items.map((i) => i.p.id);
-  const startPrices = new Map<string, string>();
-  if (ids.length > 0) {
-    const minPkgs = await db
-      .select({
-        productId: productPackages.productId,
-        min: sql<string>`min(${productPackages.salePrice})`,
-      })
-      .from(productPackages)
+  try {
+    const items = await db
+      .select({ p: products, categoryName: categoriesTable.name })
+      .from(products)
+      .innerJoin(categoriesTable, eq(products.categoryId, categoriesTable.id))
       .where(
         and(
-          inArray(productPackages.productId, ids),
-          eq(productPackages.isAvailable, true),
+          ne(products.status, "hidden"),
+          eq(categoriesTable.isVisible, true),
+          isTrader ? undefined : eq(products.traderOnly, false),
         ),
       )
-      .groupBy(productPackages.productId);
-    for (const r of minPkgs) startPrices.set(r.productId, r.min);
+      .orderBy(asc(products.sortOrder), asc(products.name))
+      .limit(8);
 
-    const cfgs = await db
-      .select()
-      .from(productQuantityConfig)
-      .where(inArray(productQuantityConfig.productId, ids));
-    for (const c of cfgs) {
-      const unit = c.pricePerUnit
-        ? parseAmount(c.pricePerUnit)
-        : c.pricePer1000
-          ? per1000ToUnit(parseAmount(c.pricePer1000))
-          : null;
-      if (unit !== null && !startPrices.has(c.productId)) {
-        startPrices.set(c.productId, displayAmount(unit));
+    const ids = items.map((i) => i.p.id);
+    const startPrices = new Map<string, string>();
+    if (ids.length > 0) {
+      const minPkgs = await db
+        .select({
+          productId: productPackages.productId,
+          min: sql<string>`min(${productPackages.salePrice})`,
+        })
+        .from(productPackages)
+        .where(
+          and(
+            inArray(productPackages.productId, ids),
+            eq(productPackages.isAvailable, true),
+          ),
+        )
+        .groupBy(productPackages.productId);
+      for (const r of minPkgs) startPrices.set(r.productId, r.min);
+
+      const cfgs = await db
+        .select()
+        .from(productQuantityConfig)
+        .where(inArray(productQuantityConfig.productId, ids));
+      for (const c of cfgs) {
+        const unit = c.pricePerUnit
+          ? parseAmount(c.pricePerUnit)
+          : c.pricePer1000
+            ? per1000ToUnit(parseAmount(c.pricePer1000))
+            : null;
+        if (unit !== null && !startPrices.has(c.productId)) {
+          startPrices.set(c.productId, displayAmount(unit));
+        }
       }
     }
+    return { items, startPrices };
+  } catch (err) {
+    console.error("Database unavailable or connection error:", err);
+    return { items: [], startPrices: new Map<string, string>() };
   }
-  return { items, startPrices };
 }
 
 export default async function HomePage() {

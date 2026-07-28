@@ -13,10 +13,7 @@ const globalForDb = globalThis as unknown as {
 
 import { resolveDatabaseUrl, isSupabasePooler } from "./url";
 
-const connectionString = resolveDatabaseUrl();
-if (!connectionString) {
-  throw new Error("DATABASE_URL غير معرّف في متغيرات البيئة (.env).");
-}
+const connectionString = resolveDatabaseUrl() || "postgresql://postgres:postgres@localhost:5432/evo_store";
 if (
   connectionString.includes("[") ||
   connectionString.includes("]") ||
