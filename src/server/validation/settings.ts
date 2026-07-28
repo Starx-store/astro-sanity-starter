@@ -67,6 +67,8 @@ export const settingsSchema = z.object({
   "auth.register_phone_required": z.boolean().default(true),
   "auth.allow_registration": z.boolean().default(true),
   "admin.fallback_email": z.string().trim().email("بريد إلكتروني غير صالح").optional().or(z.literal("")),
+  "whatsapp.api_url": z.string().trim().url("رابط غير صالح").optional().or(z.literal("")),
+  "whatsapp.api_token": z.string().trim().optional().or(z.literal("")),
 });
 
 export type SettingsInput = z.infer<typeof settingsSchema>;

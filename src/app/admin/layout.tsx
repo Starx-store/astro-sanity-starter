@@ -57,17 +57,17 @@ export default async function AdminLayout({
             <LogoutButton />
           </div>
         </div>
-       <nav className="mx-auto grid max-w-6xl grid-cols-2 gap-2 px-4 py-3 sm:grid-cols-3 md:flex md:gap-1 md:overflow-x-auto md:py-0">
-  {visibleTabs.map((t) => (
-    <Link
-      key={t.href}
-      href={t.href}
-      className="flex min-h-10 items-center justify-center rounded-lg border border-border px-2 py-2 text-center text-xs font-medium leading-tight text-muted transition-colors hover:border-gold/50 hover:text-foreground sm:text-sm md:min-h-0 md:shrink-0 md:whitespace-nowrap md:rounded-none md:border-x-0 md:border-t-0 md:border-b-2 md:border-b-transparent md:px-3 md:py-3"
-    >
-      {t.label}
-    </Link>
-  ))}
-</nav>
+        <nav className="mx-auto flex max-w-6xl overflow-x-auto gap-1 px-4 py-2.5 border-t border-border/40 md:border-t-0 md:py-0 text-sm scrollbar-none">
+          {visibleTabs.map((t) => (
+            <Link
+              key={t.href}
+              href={t.href}
+              className="shrink-0 whitespace-nowrap rounded-md border border-border/80 px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-gold/50 hover:text-foreground md:rounded-none md:border-x-0 md:border-t-0 md:border-b-2 md:border-b-transparent md:px-3.5 md:py-3 md:text-sm"
+            >
+              {t.label}
+            </Link>
+          ))}
+        </nav>
       </header>
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
     </div>

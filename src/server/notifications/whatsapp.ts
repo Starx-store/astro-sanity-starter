@@ -1,4 +1,5 @@
 import "server-only";
+import { getSetting } from "@/server/settings/service";
 
 interface WhatsAppNotificationOptions {
   phone: string;
@@ -18,9 +19,7 @@ function formatWhatsAppNumber(phone: string): string {
     cleaned = "+" + cleaned.slice(2);
   }
   
-  // If no +, assume it might need country code (e.g., 966)
-  // For simplicity, if it doesn't start with +, just ensure it's digits
-  if (!cleaned.startsWith("+")) {
+  if (!cleaned.startsWith("+") && cleaned.length > 0) {
     cleaned = "+" + cleaned;
   }
   
@@ -28,11 +27,11 @@ function formatWhatsAppNumber(phone: string): string {
 }
 
 export async function sendWhatsAppNotification({ phone, text, type }: WhatsAppNotificationOptions): Promise<void> {
+  if (!phone || phone.trim() === "") return;
   const formattedPhone = formatWhatsAppNumber(phone);
   
-  // In a real app, this would dispatch to a WhatsApp API provider (e.g. Twilio, MessageBird, or WhatsApp Cloud API)
-  const apiUrl = process.env.WHATSAPP_API_URL;
-  const apiToken = process.env.WHATSAPP_API_TOKEN;
+  const apiUrl = process.env.WHATSAPP_API_URL || (await getSetting<string>("whatsapp.api_url", ""));
+  const apiToken = process.env.WHATSAPP_API_TOKEN || (await getSetting<string>("whatsapp.api_token", ""));
 
   if (apiUrl && apiToken) {
     try {

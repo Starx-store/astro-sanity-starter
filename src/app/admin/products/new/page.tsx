@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { ArrowRight } from "lucide-react";
 import { db } from "@/server/db";
 import { categories, providers } from "@/server/db/schema";

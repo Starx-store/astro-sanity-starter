@@ -34,6 +34,11 @@ export function SettingsForm({
     "announcement.text_en": string;
     "announcement.link": string;
     "announcement.badge": string;
+    "auth.register_phone_required": boolean;
+    "auth.allow_registration": boolean;
+    "admin.fallback_email": string;
+    "whatsapp.api_url": string;
+    "whatsapp.api_token": string;
   };
 }) {
   const router = useRouter();
@@ -261,6 +266,32 @@ export function SettingsForm({
           onChange={(e) => setF({ ...f, supportWhatsapp: e.target.value })}
         />
       </Field>
+
+      <div className="rounded-lg border border-border bg-surface-2/40 p-4 space-y-4">
+        <p className="mb-1 text-sm font-medium">بوابة إشعارات الواتساب (WhatsApp Gateway API)</p>
+        <p className="text-xs text-muted">
+          ربط خدمة إرسال الرسائل التلقائية إلى واتساب الزبائن عند فتح حساب جديد، إكمال الطلب، أو الإيداع (مثل UltraMsg, Twilio, أو WhatsApp API).
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="رابط بوابة API (API URL)" error={errors["whatsapp.api_url"]} hint="مثال: https://api.ultramsg.com/instanceXXXX/messages/chat">
+            <Input
+              dir="ltr"
+              placeholder="https://..."
+              value={f["whatsapp.api_url"]}
+              onChange={(e) => setF({ ...f, "whatsapp.api_url": e.target.value })}
+            />
+          </Field>
+          <Field label="مفتاح البوابة (API Token / Key)" error={errors["whatsapp.api_token"]}>
+            <Input
+              type="password"
+              dir="ltr"
+              placeholder="token_..."
+              value={f["whatsapp.api_token"]}
+              onChange={(e) => setF({ ...f, "whatsapp.api_token": e.target.value })}
+            />
+          </Field>
+        </div>
+      </div>
 
       <Field
         label="كود إحالة التاجر"

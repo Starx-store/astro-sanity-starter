@@ -40,6 +40,8 @@ export default async function AdminSettingsPage() {
     "auth.register_phone_required": s["auth.register_phone_required"] !== false,
     "auth.allow_registration": s["auth.allow_registration"] !== false,
     "admin.fallback_email": String(s["admin.fallback_email"] ?? ""),
+    "whatsapp.api_url": String(s["whatsapp.api_url"] ?? ""),
+    "whatsapp.api_token": String(s["whatsapp.api_token"] ?? ""),
   };
 
   return (

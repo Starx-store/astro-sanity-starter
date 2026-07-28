@@ -31,6 +31,7 @@ import {
 } from "./constants";
 import type { RegisterInput } from "@/server/validation/auth";
 import { linkReferral, ensureReferralCode, findUserByReferralCode, getTraderReferralCode } from "@/server/referrals/service";
+import { getSetting } from "@/server/settings/service";
 
 export class AuthError extends AppError {}
 
@@ -42,6 +43,16 @@ export class AuthError extends AppError {}
 export async function registerUser(
   input: RegisterInput,
 ): Promise<{ user: User; needsVerification: boolean }> {
+  const allowRegistration = (await getSetting<boolean>("auth.allow_registration", true)) !== false;
+  if (!allowRegistration) {
+    throw new AuthError("registration_disabled", "تسجيل الحسابات الجديدة معطّل حاليًا بقرار من الإدارة.", 403);
+  }
+
+  const isPhoneRequired = (await getSetting<boolean>("auth.register_phone_required", true)) !== false;
+  if (isPhoneRequired && (!input.phone || input.phone.trim() === "")) {
+    throw new AuthError("phone_required", "رقم الواتساب مطلوب لإتمام التسجيل.", 400);
+  }
+
   const email = input.email.toLowerCase();
 
   const existing = await db
