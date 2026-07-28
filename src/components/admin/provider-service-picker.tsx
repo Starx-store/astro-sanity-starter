@@ -97,24 +97,25 @@ export function ProviderServicePicker({
               </Button>
             </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                search(q);
-              }}
-              className="flex gap-2"
-            >
+            <div className="flex gap-2">
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    search(q);
+                  }
+                }}
                 placeholder="ابحث باسم الخدمة أو رقمها (مثال: 4962 أو فيسبوك)..."
                 className="flex-1"
                 autoFocus
               />
-              <Button type="submit" size="sm" loading={loading}>
+              <Button type="button" size="sm" loading={loading} onClick={() => search(q)}>
                 بحث
               </Button>
-            </form>
+            </div>
 
             <div className="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[200px]">
               {loading ? (
