@@ -137,10 +137,14 @@ export const smmAdapter: ProviderAdapter = {
     const link =
       (params.input[linkField] as string | undefined) ??
       (params.input.link as string | undefined) ??
-      (params.input.url as string | undefined);
+      (params.input.url as string | undefined) ??
+      (params.input.target as string | undefined) ??
+      (params.input.username as string | undefined) ??
+      (params.input.account as string | undefined) ??
+      (Object.values(params.input).find((v) => typeof v === "string" && v.trim() !== "") as string | undefined);
     if (!link) {
       throw new AdapterError(
-        `الحقل المطلوب "${linkField}" غير موجود في بيانات الطلب.`,
+        `يرجى تعبئة حقل الطلب المطلوب (الرابط/اسم المستخدم).`,
       );
     }
 
