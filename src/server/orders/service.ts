@@ -447,8 +447,21 @@ export async function createOrder(params: {
   const finalTotal = coupon ? coupon.newTotal : priced.total;
   const inputData = validateInputs(priced.product.requiredFields, params.inputs);
   const orderNo = generateReferenceNo("ORD");
-  const isAuto = priced.product.fulfillment === "automatic";
+  let selectedPkgHasProvider = false;
+  if (priced.packageId) {
+    const [pkg] = await db
+      .select({ providerId: productPackages.providerId, externalProductId: productPackages.externalProductId })
+      .from(productPackages)
+      .where(eq(productPackages.id, priced.packageId))
+      .limit(1);
+    if (pkg?.providerId && pkg.externalProductId) {
+      selectedPkgHasProvider = true;
+    }
+  }
+
+  const isAuto = priced.product.fulfillment === "automatic" || selectedPkgHasProvider;
   const isStock = priced.product.fulfillment === "stock";
+  const fulfillmentMode = isAuto ? "automatic" : priced.product.fulfillment;
 
   // منتجات المخزون: كل وحدة كمية = عنصر مخزون واحد، فالكمية عدد صحيح حتمًا.
   let stockNeeded = 0;
@@ -472,7 +485,7 @@ export async function createOrder(params: {
   }
 
   // منتج تلقائي بلا مزوّد نشط مرتبط ⇒ غير قابل للطلب (لا نحجز مال العميل في طلب عالق)
-  if (isAuto) {
+  if (isAuto && !selectedPkgHasProvider) {
     const link = await getProviderLinkForProduct(priced.product.id);
     if (!link || link.provider.status !== "active") {
       throw new AppError(
@@ -496,7 +509,7 @@ export async function createOrder(params: {
           unitPrice: toDbAmount(priced.unitPrice),
           totalPrice: toDbAmount(finalTotal),
           costPrice: toDbAmount(priced.cost),
-          fulfillment: priced.product.fulfillment,
+          fulfillment: fulfillmentMode,
           status: "under_review",
           inputData,
           idempotencyKey: params.idempotencyKey,
@@ -834,7 +847,11 @@ export async function adminUpdateOrderStatus(params: {
     });
   });
 
-  // بريد تسليم عند الإكمال اليدوي (بعد نجاح المعاملة — فشله لا يمس الطلب).
+  if (params.to === "in_progress") {
+    dispatchOrderToProvider(params.orderId).catch((err) => {
+      console.error("Error dispatching order on admin in_progress transition:", err);
+    });
+  }
   if (params.to === "completed") {
     const [row] = await db
       .select({ email: users.email, phone: users.phone, orderNo: orders.orderNo })

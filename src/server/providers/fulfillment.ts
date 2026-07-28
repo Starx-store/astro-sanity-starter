@@ -163,7 +163,6 @@ export async function dispatchOrderToProvider(orderId: string): Promise<void> {
     .where(eq(orders.id, orderId))
     .limit(1);
   if (!order) return;
-  if (order.fulfillment !== "automatic") return;
   if (!["under_review", "needs_manual"].includes(order.status)) return;
 
   let finalProvider: typeof providers.$inferSelect | null = null;
