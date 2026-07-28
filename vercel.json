@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    {
+      "path": "/api/cron/poll-providers",
+      "schedule": "0 3 * * *"
+    }
+  ],
+  "installCommand": "npm ci --no-audit --no-fund"
+}

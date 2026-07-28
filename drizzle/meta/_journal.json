@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1785068397538,
+      "tag": "0000_solid_king_cobra",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1785107181642,
+      "tag": "0001_fast_nekra",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785223560074,
+      "tag": "0002_sturdy_vertigo",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1785227549094,
+      "tag": "0003_keen_hairball",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1785230949080,
+      "tag": "0004_fancy_blob",
+      "breakpoints": true
+    }
+  ]
+}

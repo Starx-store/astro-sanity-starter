@@ -1,0 +1,453 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ShoppingCart, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field } from "@/components/ui/field";
+import { Alert } from "@/components/ui/alert";
+import { Card } from "@/components/ui/card";
+import { apiPost } from "@/lib/api-client";
+import { cn } from "@/lib/utils";
+import { useLocale } from "@/lib/use-locale";
+
+const T = {
+  ar: {
+    choosePkg: "اختر البكج",
+    qtyLabel: (unit: string) => `الكمية (${unit})`,
+    qtyHint: (min: string, max: string | null) =>
+      `من ${min}${max ? ` إلى ${max}` : ""}`,
+    optional: (label: string) => `${label} (اختياري)`,
+    coupon: "كوبون خصم (اختياري)",
+    estTotal: "الإجمالي التقريبي",
+    topUp: "{t.topUp}",
+    unavailable: "هذا المنتج غير متاح للطلب حاليًا.",
+    loginToOrder: "سجّل الدخول للطلب",
+    buyNow: "شراء الآن",
+    confirmTitle: "تأكيد الطلب",
+    close: "إغلاق",
+    product: "المنتج",
+    pkg: "البكج",
+    qty: "الكمية",
+    total: "الإجمالي",
+    approx: "بالتحويل التقريبي",
+    balanceAfter: "الرصيد المتبقي بعد الشراء",
+    serverNote:
+      "السعر النهائي يُحتسب من الخادم، وسيُحجز المبلغ من محفظتك حتى اكتمال التنفيذ.",
+    confirmBuy: "تأكيد الشراء",
+    cancel: "إلغاء",
+  },
+  en: {
+    choosePkg: "Choose a package",
+    qtyLabel: (unit: string) => `Quantity (${unit})`,
+    qtyHint: (min: string, max: string | null) =>
+      `From ${min}${max ? ` to ${max}` : ""}`,
+    optional: (label: string) => `${label} (optional)`,
+    coupon: "Coupon code (optional)",
+    estTotal: "Estimated total",
+    topUp: "Top up your wallet",
+    unavailable: "This product is currently unavailable for ordering.",
+    loginToOrder: "Sign in to order",
+    buyNow: "Buy Now",
+    confirmTitle: "Confirm Order",
+    close: "Close",
+    product: "Product",
+    pkg: "Package",
+    qty: "Quantity",
+    total: "Total",
+    approx: "Approx. conversion",
+    balanceAfter: "Balance after purchase",
+    serverNote:
+      "The final price is calculated by the server, and the amount will be held from your wallet until the order is completed.",
+    confirmBuy: "Confirm Purchase",
+    cancel: "Cancel",
+  },
+} as const;
+
+type FieldDef = {
+  key: string;
+  label: string;
+  type: "text" | "textarea" | "url" | "email" | "number";
+  required: boolean;
+};
+
+type Pkg = {
+  id: string;
+  name: string;
+  description: string | null;
+  salePrice: string;
+};
+
+type QtyInfo = {
+  unit: string;
+  minQty: string;
+  maxQty: string | null;
+  pricePerUnit: string | null;
+  pricePer1000: string | null;
+  tiers: { minQty: string; maxQty: string | null; pricePerUnit: string }[];
+};
+
+const fmt = (n: number) =>
+  n.toLocaleString("en-US", { maximumFractionDigits: 8 });
+
+export function OrderBox(props: {
+  productId: string;
+  productName: string;
+  productType: "package" | "quantity";
+  orderable: boolean;
+  packages: Pkg[];
+  qty: QtyInfo | null;
+  requiredFields: FieldDef[];
+  isLoggedIn: boolean;
+  availableBalance: string | null;
+  loginNext: string;
+  /** عملة عرض اختيارية — التحويل تقريبي والدفع بالدولار. */
+  currency?: { label: string; rate: number } | null;
+}) {
+  const router = useRouter();
+  const t = T[useLocale()];
+  const [packageId, setPackageId] = useState<string | null>(
+    props.packages[0]?.id ?? null,
+  );
+  const [quantity, setQuantity] = useState(props.qty?.minQty ?? "");
+  const [inputs, setInputs] = useState<Record<string, string>>({});
+  const [confirming, setConfirming] = useState(false);
+  const [idemKey, setIdemKey] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formError, setFormError] = useState<string | null>(null);
+  const [errCode, setErrCode] = useState<string | null>(null);
+  const [couponCode, setCouponCode] = useState("");
+
+  /** معاينة السعر (عرض فقط — الحساب النهائي من الخادم دائمًا). */
+  const preview = useMemo(() => {
+    if (props.productType === "package") {
+      const pkg = props.packages.find((p) => p.id === packageId);
+      return pkg ? Number(pkg.salePrice) : null;
+    }
+    const q = Number(quantity);
+    if (!props.qty || !quantity || Number.isNaN(q) || q <= 0) return null;
+    let unit: number | null = null;
+    for (const t of props.qty.tiers) {
+      if (q >= Number(t.minQty) && (t.maxQty == null || q <= Number(t.maxQty))) {
+        unit = Number(t.pricePerUnit);
+      }
+    }
+    if (unit === null && props.qty.pricePerUnit) unit = Number(props.qty.pricePerUnit);
+    if (unit === null && props.qty.pricePer1000) unit = Number(props.qty.pricePer1000) / 1000;
+    return unit === null ? null : unit * q;
+  }, [props, packageId, quantity]);
+
+  const balance = props.availableBalance ? Number(props.availableBalance) : null;
+  const after = balance !== null && preview !== null ? balance - preview : null;
+
+  function openConfirm() {
+    setErrors({});
+    setFormError(null);
+    setErrCode(null);
+    setIdemKey(crypto.randomUUID());
+    setConfirming(true);
+  }
+
+  async function submit() {
+    if (!idemKey) return;
+    setLoading(true);
+    setFormError(null);
+    setErrors({});
+    setErrCode(null);
+
+    const res = await apiPost<{ order: { id: string } }>("/api/orders", {
+      productId: props.productId,
+      packageId: props.productType === "package" ? packageId : undefined,
+      quantity: props.productType === "quantity" ? quantity.trim() : undefined,
+      inputs,
+      idempotencyKey: idemKey,
+      couponCode: couponCode.trim() || undefined,
+    });
+    setLoading(false);
+
+    if (res.ok) {
+      router.push(`/orders/${res.data.order.id}`);
+      router.refresh();
+    } else {
+      setErrCode(res.code ?? null);
+      if (res.fieldErrors) {
+        setErrors(res.fieldErrors);
+        setConfirming(false);
+      }
+      setFormError(res.error);
+    }
+  }
+
+  const selectedPkg = props.packages.find((p) => p.id === packageId);
+
+  return (
+    <div className="space-y-5">
+      {/* اختيار البكج */}
+      {props.productType === "package" && (
+        <div className="space-y-2">
+          <p className="text-sm font-medium">{t.choosePkg}</p>
+          {errors.packageId && (
+            <p className="text-xs font-medium text-danger">{errors.packageId}</p>
+          )}
+          <div className="grid gap-2 sm:grid-cols-2">
+            {props.packages.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPackageId(p.id)}
+                className={cn(
+                  "rounded-lg border p-4 text-right transition-colors",
+                  packageId === p.id
+                    ? "border-gold bg-gold/10"
+                    : "border-border bg-surface-2/40 hover:border-gold/40",
+                )}
+              >
+                <span className="block font-semibold">{p.name}</span>
+                {p.description && (
+                  <span className="mt-1 block text-xs text-muted">
+                    {p.description}
+                  </span>
+                )}
+                <span className="mt-2 block font-extrabold text-gold" dir="ltr">
+                  {fmt(Number(p.salePrice))}$
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* إدخال الكمية */}
+      {props.productType === "quantity" && props.qty && (
+        <Field
+          label={t.qtyLabel(props.qty.unit)}
+          htmlFor="quantity"
+          error={errors.quantity}
+          hint={t.qtyHint(props.qty.minQty, props.qty.maxQty)}
+        >
+          <Input
+            id="quantity"
+            inputMode="decimal"
+            dir="ltr"
+            value={quantity}
+            onChange={(e) => setQuantity(e.target.value)}
+            invalid={!!errors.quantity}
+          />
+        </Field>
+      )}
+
+      {/* الحقول المطلوبة */}
+      {props.requiredFields.map((f) => (
+        <Field
+          key={f.key}
+          label={f.required ? f.label : t.optional(f.label)}
+          htmlFor={`rf-${f.key}`}
+          error={errors[f.key]}
+        >
+          {f.type === "textarea" ? (
+            <textarea
+              id={`rf-${f.key}`}
+              rows={3}
+              value={inputs[f.key] ?? ""}
+              onChange={(e) =>
+                setInputs((s) => ({ ...s, [f.key]: e.target.value }))
+              }
+              className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+            />
+          ) : (
+            <Input
+              id={`rf-${f.key}`}
+              type={f.type === "number" ? "text" : f.type}
+              dir={f.type === "text" || f.type === "textarea" ? undefined : "ltr"}
+              value={inputs[f.key] ?? ""}
+              onChange={(e) =>
+                setInputs((s) => ({ ...s, [f.key]: e.target.value }))
+              }
+              invalid={!!errors[f.key]}
+            />
+          )}
+        </Field>
+      ))}
+
+      {/* كوبون الخصم */}
+      {props.isLoggedIn && props.orderable && (
+        <Field label={t.coupon} error={errors.couponCode}>
+          <Input
+            dir="ltr"
+            placeholder="CODE"
+            value={couponCode}
+            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+          />
+        </Field>
+      )}
+
+      {/* السعر */}
+      <div className="rounded-lg border border-border bg-surface-2/40 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted">{t.estTotal}</span>
+          <span className="text-xl font-extrabold text-gradient-gold" dir="ltr">
+            {preview !== null ? `${fmt(preview)}$` : "—"}
+          </span>
+        </div>
+        {props.currency && preview !== null && (
+          <p className="mt-1 text-left text-xs text-muted" dir="ltr">
+            ≈{" "}
+            {(preview * props.currency.rate).toLocaleString("en-US", {
+              maximumFractionDigits: preview * props.currency.rate >= 100 ? 0 : 2,
+            })}{" "}
+            {props.currency.label}
+          </p>
+        )}
+      </div>
+
+      {formError && !confirming && (
+        <Alert tone="danger">
+          {formError}
+          {errCode === "insufficient_funds" && (
+            <>
+              {" "}
+              <Link href="/wallet" className="font-medium underline">
+                {t.topUp}
+              </Link>
+            </>
+          )}
+        </Alert>
+      )}
+
+      {!props.orderable ? (
+        <Alert tone="warning">{t.unavailable}</Alert>
+      ) : !props.isLoggedIn ? (
+        <Link href={`/login?next=${encodeURIComponent(props.loginNext)}`} className="block">
+          <Button className="w-full" size="lg">
+            {t.loginToOrder}
+          </Button>
+        </Link>
+      ) : (
+        <Button
+          className="w-full"
+          size="lg"
+          onClick={openConfirm}
+          disabled={preview === null}
+        >
+          <ShoppingCart className="h-5 w-5" />
+          {t.buyNow}
+        </Button>
+      )}
+
+      {/* نافذة التأكيد */}
+      {confirming && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <Card className="w-full max-w-md animate-fade-in p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold">{t.confirmTitle}</h3>
+              <button
+                type="button"
+                onClick={() => setConfirming(false)}
+                className="text-muted hover:text-foreground"
+                aria-label={t.close}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between gap-4">
+                <span className="text-muted">{t.product}</span>
+                <span className="font-medium">{props.productName}</span>
+              </div>
+              {selectedPkg && props.productType === "package" && (
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted">{t.pkg}</span>
+                  <span className="font-medium">{selectedPkg.name}</span>
+                </div>
+              )}
+              {props.productType === "quantity" && (
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted">{t.qty}</span>
+                  <span className="font-medium" dir="ltr">
+                    {quantity} {props.qty?.unit}
+                  </span>
+                </div>
+              )}
+              {Object.entries(inputs)
+                .filter(([, v]) => v.trim())
+                .map(([k, v]) => {
+                  const def = props.requiredFields.find((f) => f.key === k);
+                  return (
+                    <div key={k} className="flex justify-between gap-4">
+                      <span className="text-muted">{def?.label ?? k}</span>
+                      <span className="max-w-[220px] truncate font-medium" dir="auto">
+                        {v}
+                      </span>
+                    </div>
+                  );
+                })}
+              <div className="my-3 border-t border-border" />
+              <div className="flex justify-between gap-4">
+                <span className="text-muted">{t.total}</span>
+                <span className="font-extrabold text-gold" dir="ltr">
+                  {preview !== null ? `${fmt(preview)}$` : "—"}
+                </span>
+              </div>
+              {props.currency && preview !== null && (
+                <div className="flex justify-between gap-4 text-xs">
+                  <span className="text-muted">{t.approx}</span>
+                  <span className="text-muted" dir="ltr">
+                    ≈{" "}
+                    {(preview * props.currency.rate).toLocaleString("en-US", {
+                      maximumFractionDigits:
+                        preview * props.currency.rate >= 100 ? 0 : 2,
+                    })}{" "}
+                    {props.currency.label}
+                  </span>
+                </div>
+              )}
+              {balance !== null && (
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted">{t.balanceAfter}</span>
+                  <span
+                    className={cn("font-bold", after !== null && after < 0 && "text-danger")}
+                    dir="ltr"
+                  >
+                    {after !== null ? `${fmt(after)}$` : "—"}
+                  </span>
+                </div>
+              )}
+              <p className="pt-1 text-xs text-muted">{t.serverNote}</p>
+            </div>
+
+            {formError && (
+              <Alert tone="danger" className="mt-4">
+                {formError}
+                {errCode === "insufficient_funds" && (
+                  <>
+                    {" "}
+                    <Link href="/wallet" className="font-medium underline">
+                      {t.topUp}
+                    </Link>
+                  </>
+                )}
+              </Alert>
+            )}
+
+            <div className="mt-5 flex gap-2">
+              <Button className="flex-1" loading={loading} onClick={submit}>
+                {t.confirmBuy}
+              </Button>
+              <Button
+                variant="outline"
+                disabled={loading}
+                onClick={() => setConfirming(false)}
+              >
+                {t.cancel}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+    </div>
+  );
+}
