@@ -42,3 +42,5 @@ next-env.d.ts
 # قاعدة البيانات المحلية وملف الاستيراد — لا تُرفع أبدًا
 /.local-pg-data/
 zipFile.zip
+
+.vercel

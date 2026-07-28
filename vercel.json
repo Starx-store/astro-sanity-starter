@@ -5,6 +5,5 @@
       "path": "/api/cron/poll-providers",
       "schedule": "0 3 * * *"
     }
-  ],
-  "installCommand": "npm ci --no-audit --no-fund"
+  ]
 }
