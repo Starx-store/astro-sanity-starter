@@ -78,7 +78,8 @@ function slugify(name: string): string {
 
 export function ProductForm({
   initial,
-  categories,
+  categories = [],
+  providers = [],
   isNew,
 }: {
   initial: ProductFormInitial;
@@ -87,7 +88,28 @@ export function ProductForm({
   isNew: boolean;
 }) {
   const router = useRouter();
-  const [f, setF] = useState(initial);
+  const [f, setF] = useState<ProductFormInitial>(() => ({
+    ...initial,
+    packages: (initial.packages ?? []).map((p) => ({
+      ...p,
+      providerId: p.providerId ?? null,
+      externalProductId: p.externalProductId ?? null,
+      fallbackProviderId: p.fallbackProviderId ?? null,
+      fallbackExternalProductId: p.fallbackExternalProductId ?? null,
+    })),
+    requiredFields: initial.requiredFields ?? [],
+    tiers: initial.tiers ?? [],
+    qtyConfig: initial.qtyConfig ?? {
+      unit: "وحدة",
+      minQty: "1",
+      maxQty: "",
+      pricePerUnit: "",
+      pricePer1000: "",
+      traderPricePerUnit: "",
+      traderPricePer1000: "",
+      costPrice: "0",
+    },
+  }));
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);

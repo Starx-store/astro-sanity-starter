@@ -267,8 +267,79 @@ export function ServiceImporter({
         </p>
       )}
 
-      {/* قائمة الخدمات */}
-      <div className="overflow-x-auto rounded-lg border border-border">
+      {/* قائمة الخدمات للجوال (كروت تفاعلية) */}
+      <div className="block space-y-2.5 sm:hidden">
+        <div className="flex items-center justify-between rounded-lg border border-border bg-surface-2/60 p-3 text-xs">
+          <button
+            type="button"
+            className="flex items-center gap-2 font-medium"
+            onClick={toggleAllOnPage}
+          >
+            {data && data.items.every((s) => selected.has(s.externalId)) ? (
+              <CheckSquare className="h-4 w-4 text-gold" />
+            ) : (
+              <Square className="h-4 w-4 text-muted" />
+            )}
+            <span>تحديد الكل في هذه الصفحة</span>
+          </button>
+        </div>
+
+        {loading && !data ? (
+          <div className="rounded-lg border border-border p-6 text-center text-xs text-muted">
+            جارٍ جلب كتالوج المزوّد…
+          </div>
+        ) : data?.items.length === 0 ? (
+          <div className="rounded-lg border border-border p-6 text-center text-xs text-muted">
+            لا خدمات مطابقة.
+          </div>
+        ) : (
+          data?.items.map((s) => {
+            const isSel = selected.has(s.externalId);
+            return (
+              <div
+                key={s.externalId}
+                className={`cursor-pointer rounded-lg border p-3 transition-colors ${
+                  isSel ? "border-gold/50 bg-gold/5" : "border-border bg-surface hover:bg-surface-2/40"
+                }`}
+                onClick={() => toggle(s)}
+              >
+                <div className="flex items-start gap-3">
+                  <div className="mt-0.5 shrink-0">
+                    {isSel ? (
+                      <CheckSquare className="h-5 w-5 text-gold" />
+                    ) : (
+                      <Square className="h-5 w-5 text-muted" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-1 min-w-0">
+                    <p className="font-semibold text-sm leading-snug break-words">
+                      {arabic.get(s.externalId) ?? s.name}
+                    </p>
+                    <p className="text-[11px] text-muted break-all" dir="ltr">
+                      {s.name.slice(0, 80)}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border/40 text-[11px]">
+                      <span className="text-muted" dir="ltr">
+                        #{s.externalId} {s.category ? `· ${s.category}` : ""}
+                      </span>
+                      <span className="text-muted" dir="ltr">
+                        الحد: {s.minQty ?? "—"} / {s.maxQty ?? "—"}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 pt-1 text-xs">
+                      <span className="text-muted">المزوّد: <strong dir="ltr">{s.ratePer1000}$</strong></span>
+                      <span className="font-bold text-gold">سعرك: <span dir="ltr">{previewPrice(s.ratePer1000)}$</span></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* قائمة الخدمات لأجهزة الكمبيوتر (جدول كامل) */}
+      <div className="hidden sm:block overflow-x-auto rounded-lg border border-border">
         <table className="w-full min-w-[720px] text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-right text-xs text-muted">
