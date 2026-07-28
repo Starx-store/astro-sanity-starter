@@ -9,6 +9,7 @@ import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/alert";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StockManager } from "@/components/admin/stock-manager";
+import { ProviderServicePicker } from "@/components/admin/provider-service-picker";
 import { apiPost, apiPostForm, apiPut } from "@/lib/api-client";
 
 /* أنواع بيانات النموذج (كلها نصوص/قيم بسيطة قابلة للتسلسل) */
@@ -571,18 +572,41 @@ export function ProductForm({
                     </select>
                   </Field>
                   <Field label="رقم الخدمة الخارجي">
-                    <Input
-                      dir="ltr"
-                      value={p.externalProductId ?? ""}
-                      onChange={(e) =>
-                        set(
-                          "packages",
-                          f.packages.map((x, j) =>
-                            j === i ? { ...x, externalProductId: e.target.value || null } : x,
-                          ),
-                        )
-                      }
-                    />
+                    <div className="space-y-1.5">
+                      <Input
+                        dir="ltr"
+                        value={p.externalProductId ?? ""}
+                        onChange={(e) =>
+                          set(
+                            "packages",
+                            f.packages.map((x, j) =>
+                              j === i ? { ...x, externalProductId: e.target.value || null } : x,
+                            ),
+                          )
+                        }
+                        placeholder="رقم الخدمة (مثال: 4962)"
+                      />
+                      {p.providerId && (
+                        <ProviderServicePicker
+                          providerId={p.providerId}
+                          currentServiceId={p.externalProductId}
+                          onSelect={(svc) => {
+                            set(
+                              "packages",
+                              f.packages.map((x, j) =>
+                                j === i
+                                  ? {
+                                      ...x,
+                                      externalProductId: svc.externalId,
+                                      costPrice: x.costPrice || svc.ratePer1000 || "0",
+                                    }
+                                  : x,
+                              ),
+                            );
+                          }}
+                        />
+                      )}
+                    </div>
                   </Field>
                   <Field label="المزوّد الاحتياطي (اختياري)">
                     <select
@@ -606,18 +630,40 @@ export function ProductForm({
                     </select>
                   </Field>
                   <Field label="رقم الخدمة الاحتياطي">
-                    <Input
-                      dir="ltr"
-                      value={p.fallbackExternalProductId ?? ""}
-                      onChange={(e) =>
-                        set(
-                          "packages",
-                          f.packages.map((x, j) =>
-                            j === i ? { ...x, fallbackExternalProductId: e.target.value || null } : x,
-                          ),
-                        )
-                      }
-                    />
+                    <div className="space-y-1.5">
+                      <Input
+                        dir="ltr"
+                        value={p.fallbackExternalProductId ?? ""}
+                        onChange={(e) =>
+                          set(
+                            "packages",
+                            f.packages.map((x, j) =>
+                              j === i ? { ...x, fallbackExternalProductId: e.target.value || null } : x,
+                            ),
+                          )
+                        }
+                        placeholder="رقم الخدمة الاحتياطي"
+                      />
+                      {p.fallbackProviderId && (
+                        <ProviderServicePicker
+                          providerId={p.fallbackProviderId}
+                          currentServiceId={p.fallbackExternalProductId}
+                          onSelect={(svc) => {
+                            set(
+                              "packages",
+                              f.packages.map((x, j) =>
+                                j === i
+                                  ? {
+                                      ...x,
+                                      fallbackExternalProductId: svc.externalId,
+                                    }
+                                  : x,
+                              ),
+                            );
+                          }}
+                        />
+                      )}
+                    </div>
                   </Field>
                 </div>
               </div>
