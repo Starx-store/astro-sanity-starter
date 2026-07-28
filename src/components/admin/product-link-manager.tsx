@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
 import { Alert } from "@/components/ui/alert";
+import { ProviderServicePicker } from "@/components/admin/provider-service-picker";
 import { apiPost } from "@/lib/api-client";
 
 type LinkRow = {
@@ -134,12 +135,22 @@ export function ProductLinkManager({
           </div>
           <div className="sm:col-span-4">
             <Field label="المعرّف لدى المزوّد">
-              <Input
-                dir="ltr"
-                value={externalProductId}
-                onChange={(e) => setExternalProductId(e.target.value)}
-                placeholder="service id"
-              />
+              <div className="space-y-1.5">
+                <Input
+                  dir="ltr"
+                  value={externalProductId}
+                  onChange={(e) => setExternalProductId(e.target.value)}
+                  placeholder="service id (مثال: 4962)"
+                />
+                <ProviderServicePicker
+                  providerId={providerId}
+                  currentServiceId={externalProductId}
+                  onSelect={(svc) => {
+                    setExternalProductId(svc.externalId);
+                    setExternalPrice(svc.ratePer1000 || "");
+                  }}
+                />
+              </div>
             </Field>
           </div>
           <div className="sm:col-span-2">

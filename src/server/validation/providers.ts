@@ -26,7 +26,13 @@ export const linkProductSchema = z.object({
     .trim()
     .min(1, "معرّف المنتج لدى المزوّد مطلوب")
     .max(120),
-  externalPrice: nonNegAmountField.optional().or(z.literal("")),
+  externalPrice: z
+    .string()
+    .trim()
+    .refine((v) => !v || /^\d+(?:\.\d{1,4})?$/.test(v), "صيغة المبلغ غير صالحة")
+    .optional()
+    .or(z.literal(""))
+    .nullable(),
 });
 
 export type LinkProductInput = z.infer<typeof linkProductSchema>;
