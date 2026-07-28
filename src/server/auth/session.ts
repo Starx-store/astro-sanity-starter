@@ -48,39 +48,40 @@ export type SessionUser = Omit<User, "passwordHash" | "twoFactorSecret">;
  * التحقق من الجلسة الحالية عبر الكوكي وإرجاع المستخدم (بدون الحقول الحسّاسة).
  */
 export async function getSessionUser(): Promise<SessionUser | null> {
-  const token = (await cookies()).get(SESSION_COOKIE)?.value;
-  if (!token) return null;
+  try {
+    const token = (await cookies()).get(SESSION_COOKIE)?.value;
+    if (!token) return null;
 
-  const tokenHash = hashToken(token);
-  const now = new Date();
+    const tokenHash = hashToken(token);
+    const now = new Date();
 
-  const rows = await db
-    .select({ user: users, sessionId: sessions.id })
-    .from(sessions)
-    .innerJoin(users, eq(sessions.userId, users.id))
-    .where(
-      and(
-        eq(sessions.tokenHash, tokenHash),
-        isNull(sessions.revokedAt),
-        gt(sessions.expiresAt, now),
-      ),
-    )
-    .limit(1);
+    const rows = await db
+      .select({ user: users, sessionId: sessions.id })
+      .from(sessions)
+      .innerJoin(users, eq(sessions.userId, users.id))
+      .where(
+        and(
+          eq(sessions.tokenHash, tokenHash),
+          isNull(sessions.revokedAt),
+          gt(sessions.expiresAt, now),
+        ),
+      )
+      .limit(1);
 
-  const row = rows[0];
-  if (!row) return null;
-  // الموقوف كالمحظور: لا جلسة فعّالة (وإلا مرّ عبر حرّاس الصفحات التي
-  // تفحص الدور/الصلاحية فقط دون حالة الحساب).
-  if (row.user.status !== "active") return null;
+    const row = rows[0];
+    if (!row) return null;
+    if (row.user.status !== "active") return null;
 
-  // تحديث آخر ظهور (بدون انتظار حرج).
-  await db
-    .update(sessions)
-    .set({ lastSeenAt: now })
-    .where(eq(sessions.id, row.sessionId));
+    await db
+      .update(sessions)
+      .set({ lastSeenAt: now })
+      .where(eq(sessions.id, row.sessionId));
 
-  const { passwordHash: _p, twoFactorSecret: _t, ...safe } = row.user;
-  return safe;
+    const { passwordHash: _p, twoFactorSecret: _t, ...safe } = row.user;
+    return safe;
+  } catch {
+    return null;
+  }
 }
 
 /** إنهاء الجلسة الحالية (تسجيل الخروج). */
