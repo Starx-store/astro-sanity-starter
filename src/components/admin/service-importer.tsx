@@ -427,13 +427,14 @@ export function ServiceImporter({
             استيراد {selected.size > 0 ? `(${selected.size})` : ""}
           </Button>
         </div>
-        <label className="flex items-center gap-2 text-xs sm:col-span-12">
+        <label className="flex items-start sm:items-center gap-2 text-xs sm:col-span-12 leading-relaxed cursor-pointer">
           <input
             type="checkbox"
             checked={publish}
             onChange={(e) => setPublish(e.target.checked)}
+            className="mt-0.5 sm:mt-0 h-4 w-4 shrink-0"
           />
-          نشر المنتجات فورًا (بدون تحديد تُستورد مخفية لمراجعتها أولًا)
+          <span>نشر المنتجات فورًا (بدون تحديد تُستورد مخفية لمراجعتها أولًا)</span>
         </label>
         <p className="text-[11px] text-muted sm:col-span-12">
           <Badge tone="success">مزامنة تلقائية</Badge> سعرك يُعاد حسابه من سعر

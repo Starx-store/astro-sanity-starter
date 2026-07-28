@@ -115,7 +115,7 @@ export function ProductLinkManager({
       {products.length > 0 ? (
         <form
           onSubmit={add}
-          className="grid items-end gap-3 rounded-lg border border-border bg-surface-2/40 p-4 sm:grid-cols-12"
+          className="grid grid-cols-1 items-end gap-3 rounded-lg border border-border bg-surface-2/40 p-3 sm:p-4 sm:grid-cols-12 max-w-full overflow-hidden"
         >
           <div className="sm:col-span-4">
             <Field label="المنتج">

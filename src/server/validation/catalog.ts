@@ -61,8 +61,19 @@ export const requiredFieldDefSchema = z.object({
 
 export type RequiredFieldDef = z.infer<typeof requiredFieldDefSchema>;
 
+const optionalUuid = z
+  .string()
+  .trim()
+  .refine(
+    (v) => !v || /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(v),
+    "معرّف غير صالح",
+  )
+  .optional()
+  .or(z.literal(""))
+  .nullable();
+
 export const packageRowSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: optionalUuid,
   name: z.string().trim().min(1, "اسم البكج مطلوب").max(120),
   description: optionalText(500),
   salePrice: posAmountField,
@@ -71,14 +82,14 @@ export const packageRowSchema = z.object({
   costPrice: nonNegAmountField.default("0"),
   isAvailable: z.boolean().default(true),
   sortOrder: z.coerce.number().int().min(0).max(9999).default(0),
-  providerId: z.string().uuid().optional().or(z.literal("")).nullable(),
+  providerId: optionalUuid,
   externalProductId: optionalText(120).nullable(),
-  fallbackProviderId: z.string().uuid().optional().or(z.literal("")).nullable(),
+  fallbackProviderId: optionalUuid,
   fallbackExternalProductId: optionalText(120).nullable(),
 });
 
 export const tierRowSchema = z.object({
-  id: z.string().uuid().optional(),
+  id: optionalUuid,
   minQty: qtyField,
   maxQty: qtyField.optional().or(z.literal("")),
   pricePerUnit: posAmountField,
@@ -104,7 +115,7 @@ export const productSchema = z
     type: z.enum(["package", "quantity"]),
     fulfillment: z.enum(["manual", "automatic", "stock"]),
     status: z.enum(["active", "hidden", "maintenance", "out_of_stock"]),
-    imageId: z.string().uuid().nullable().optional(),
+    imageId: optionalUuid,
     description: optionalText(2000),
     executionTime: optionalText(120),
     terms: optionalText(2000),

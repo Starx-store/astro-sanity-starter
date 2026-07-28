@@ -61,6 +61,8 @@ async function maintenanceGate(): Promise<{ blocked: boolean; storeName: string 
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const path = (await headers()).get("x-evo-path") ?? "/";
+  const isAdminPath = path.startsWith("/admin");
   const gate = await maintenanceGate();
   const locale = await getLocale();
   
@@ -93,7 +95,7 @@ export default async function RootLayout({
               badge={announcement.badge} 
             />
             {children}
-            <WhatsAppButton />
+            {!isAdminPath && <WhatsAppButton />}
           </>
         )}
       </body>

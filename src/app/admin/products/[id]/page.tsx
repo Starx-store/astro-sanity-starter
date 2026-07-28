@@ -127,6 +127,8 @@ export default async function EditProductPage(
             sortOrder: p.sortOrder,
             providerId: p.providerId,
             externalProductId: p.externalProductId,
+            fallbackProviderId: p.fallbackProviderId ?? null,
+            fallbackExternalProductId: p.fallbackExternalProductId ?? null,
           })),
           qtyConfig: {
             unit: cfg?.unit ?? "وحدة",
