@@ -420,6 +420,7 @@ export function ProductForm({
                     salePrice: "",
                     traderPrice: "",
                     costPrice: "0",
+                    quantity: "1000",
                     isAvailable: true,
                     sortOrder: f.packages.length,
                     providerId: null,
