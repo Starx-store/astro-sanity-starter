@@ -109,7 +109,7 @@ export default async function ProviderDetailPage(
 
           {/* استيراد خدمات المزوّد */}
           <Card>
-            <CardHeader className="flex-row items-center justify-between">
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <CardTitle className="text-base">
                 استيراد خدمات المزوّد
               </CardTitle>

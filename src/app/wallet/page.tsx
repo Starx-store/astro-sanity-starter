@@ -130,7 +130,7 @@ export default async function WalletPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 pb-24 sm:pb-12">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">{t.title}</h1>
           <p className="text-sm text-muted">{t.subtitle}</p>
