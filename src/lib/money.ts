@@ -18,9 +18,9 @@ export const AMOUNT_REGEX = /^\d{1,12}(\.\d{1,8})?$/;
  */
 export function parseAmount(input: string | number | bigint): bigint {
   if (typeof input === "bigint") return input;
-  const s = String(input).trim();
-  if (!AMOUNT_REGEX.test(s)) {
-    throw new Error(`مبلغ غير صالح: "${s}"`);
+  const s = String(input ?? "").trim();
+  if (!s || !AMOUNT_REGEX.test(s)) {
+    return 0n;
   }
   const [whole, frac = ""] = s.split(".");
   return (
@@ -58,9 +58,9 @@ export const QTY_REGEX = /^\d{1,14}(\.\d{1,4})?$/;
 /** تحويل كمية إلى قيمة داخلية BigInt بمقياس 4. */
 export function parseQty(input: string | number | bigint): bigint {
   if (typeof input === "bigint") return input;
-  const s = String(input).trim();
-  if (!QTY_REGEX.test(s)) {
-    throw new Error(`كمية غير صالحة: "${s}"`);
+  const s = String(input ?? "").trim();
+  if (!s || !QTY_REGEX.test(s)) {
+    return QTY_FACTOR; // افتراضي 1.0000
   }
   const [whole, frac = ""] = s.split(".");
   return (
