@@ -3,8 +3,8 @@
 @tailwind utilities;
 
 /**
- * نظام تصميم Evo Store Pro Max — تصميم فاخر فائق الاحترافية مع مؤشرات توهج عصرية
- * ووضع داكن عميق ونظام Glassmorphism ذكي مع هوية بني ذهبي مشرق.
+ * نظام تصميم Evo Store Pro Max — الوضع الداكن والوضع النهاري الفاخر.
+ * ألوان متناسقة، تباين عالي، وتأثيرات زجاجية ممتازة.
  */
 :root {
   /* أسطح داكنة فائقة الأناقة */
@@ -25,11 +25,6 @@
   --gold-soft: 180 142 45;
   --gold-foreground: 15 12 4;
 
-  /* تدرجات لمسات النيون */
-  --accent-blue: 59 130 246;
-  --accent-purple: 147 51 234;
-  --accent-emerald: 16 185 129;
-
   /* حالات النظام */
   --danger: 239 68 68;
   --success: 34 197 94;
@@ -39,25 +34,29 @@
   --radius: 1rem;
 }
 
+/**
+ * الوضع النهاري النقي الفاخر (Platinum Light Theme) —
+ * خلفية لؤلؤية صافية، تباين عالي جداً للنصوص، وكروت بيضاء براقة مع ظلال ناعمة وإضاءة ذهبية.
+ */
 .light {
-  --bg: 250 248 242;
+  --bg: 248 250 254;
   --surface: 255 255 255;
-  --surface-2: 244 239 228;
-  --border: 224 216 198;
-  --input: 248 244 235;
-  --ring: 166 124 36;
+  --surface-2: 241 245 252;
+  --border: 226 232 243;
+  --input: 241 245 249;
+  --ring: 217 119 6;
 
-  --foreground: 20 24 33;
-  --muted: 100 110 128;
+  --foreground: 15 23 42;
+  --muted: 71 85 105;
 
-  --gold: 175 130 30;
-  --gold-strong: 145 105 20;
-  --gold-soft: 205 165 75;
+  --gold: 190 135 15;
+  --gold-strong: 160 105 10;
+  --gold-soft: 217 119 6;
   --gold-foreground: 255 255 255;
 
-  --danger: 220 38 38;
-  --success: 22 163 74;
-  --warning: 202 138 4;
+  --danger: 225 29 72;
+  --success: 16 185 129;
+  --warning: 217 119 6;
   --info: 37 99 235;
 }
 
@@ -81,10 +80,15 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   background-image: 
-    radial-gradient(circle at 15% 15%, rgba(212, 175, 55, 0.04) 0%, transparent 45%),
-    radial-gradient(circle at 85% 85%, rgba(59, 130, 246, 0.04) 0%, transparent 45%),
-    radial-gradient(circle at 50% 50%, rgba(147, 51, 234, 0.02) 0%, transparent 60%);
+    radial-gradient(circle at 15% 15%, rgba(212, 175, 55, 0.05) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(59, 130, 246, 0.04) 0%, transparent 45%);
   background-attachment: fixed;
+}
+
+.light body {
+  background-image: 
+    radial-gradient(circle at 15% 15%, rgba(217, 119, 6, 0.06) 0%, transparent 45%),
+    radial-gradient(circle at 85% 85%, rgba(37, 99, 235, 0.04) 0%, transparent 45%);
 }
 
 /* شريط تمرير أنيق متدرج */
@@ -115,24 +119,21 @@ body {
   .text-gradient-gold {
     background: linear-gradient(
       135deg,
-      #fff3b0 0%,
-      #ffd700 35%,
-      #d4af37 70%,
-      #aa7c11 100%
+      #d4af37 0%,
+      #b8860b 50%,
+      #996515 100%
     );
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    text-shadow: 0 0 30px rgba(212, 175, 55, 0.25);
   }
 
-  /* التدرج الماسي النيون */
-  .text-gradient-neon {
+  .light .text-gradient-gold {
     background: linear-gradient(
       135deg,
-      #60a5fa 0%,
-      #c084fc 50%,
-      #f472b6 100%
+      #b45309 0%,
+      #d97706 50%,
+      #92400e 100%
     );
     -webkit-background-clip: text;
     background-clip: text;
@@ -147,25 +148,52 @@ body {
     background-size: 36px 36px;
   }
 
+  .light .bg-grid-pro {
+    background-image: 
+      linear-gradient(to right, rgba(15, 23, 42, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(15, 23, 42, 0.04) 1px, transparent 1px);
+    background-size: 36px 36px;
+  }
+
   /* Glassmorphism Pro Max مع توهج الحدود */
   .glass-card-pro {
-    background: rgba(var(--surface), 0.65);
+    background: rgba(var(--surface), 0.75);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(var(--border), 0.6);
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    border: 1px solid rgba(var(--border), 0.7);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.25);
+  }
+
+  .light .glass-card-pro {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.02);
   }
 
   .glass-card-gold {
     background: linear-gradient(
       135deg,
       rgba(212, 175, 55, 0.08) 0%,
-      rgba(var(--surface), 0.75) 100%
+      rgba(var(--surface), 0.8) 100%
     );
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(212, 175, 55, 0.25);
-    box-shadow: 0 10px 40px -10px rgba(212, 175, 55, 0.15);
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    box-shadow: 0 12px 40px -10px rgba(212, 175, 55, 0.15);
+  }
+
+  .light .glass-card-gold {
+    background: linear-gradient(
+      135deg,
+      rgba(254, 243, 199, 0.6) 0%,
+      rgba(255, 255, 255, 0.9) 100%
+    );
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    box-shadow: 0 12px 35px -10px rgba(217, 119, 6, 0.12);
   }
 
   /* بطاقات تفاعلية ممتازة حائمة */
@@ -175,41 +203,20 @@ body {
     overflow: hidden;
   }
 
-  .card-interactive-pro::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255, 255, 255, 0.05),
-      transparent
-    );
-    transition: left 0.6s ease;
-  }
-
-  .card-interactive-pro:hover::before {
-    left: 100%;
-  }
-
   .card-interactive-pro:hover {
-    transform: translateY(-6px) scale(1.01);
+    transform: translateY(-5px);
     border-color: rgba(212, 175, 55, 0.5) !important;
     box-shadow: 
-      0 20px 40px -15px rgba(0, 0, 0, 0.5),
-      0 0 25px -5px rgba(212, 175, 55, 0.25) !important;
+      0 20px 40px -15px rgba(0, 0, 0, 0.3),
+      0 0 20px -5px rgba(212, 175, 55, 0.2) !important;
   }
 
-  /* توهجات وأنيميشن حركة التوهج */
-  .glow-gold {
-    box-shadow: 0 0 35px -5px rgba(212, 175, 55, 0.4);
-  }
-
-  .glow-blue {
-    box-shadow: 0 0 35px -5px rgba(59, 130, 246, 0.4);
+  .light .card-interactive-pro:hover {
+    transform: translateY(-5px);
+    border-color: rgba(217, 119, 6, 0.5) !important;
+    box-shadow: 
+      0 20px 35px -10px rgba(0, 0, 0, 0.08),
+      0 0 20px -5px rgba(217, 119, 6, 0.15) !important;
   }
 
   /* أنيميشنات حية */
@@ -219,10 +226,6 @@ body {
 
   .animate-pulse-glow-pro {
     animation: pulseGlowPro 4s ease-in-out infinite;
-  }
-
-  .animate-shine {
-    animation: shine 3s infinite linear;
   }
 }
 
@@ -245,15 +248,6 @@ body {
     opacity: 0.75;
     transform: scale(1.15);
     filter: blur(50px);
-  }
-}
-
-@keyframes shine {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
   }
 }
 
