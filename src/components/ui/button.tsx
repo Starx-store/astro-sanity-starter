@@ -6,12 +6,12 @@ type Size = "sm" | "md" | "lg" | "icon";
 
 const variantClasses: Record<Variant, string> = {
   primary:
-    "bg-gradient-to-b from-gold to-gold-strong text-gold-foreground hover:from-gold-strong hover:to-gold-strong shadow-gold",
+    "bg-gradient-to-b from-gold to-gold-strong text-gold-foreground hover:from-gold-strong hover:to-gold-strong shadow-gold transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] shadow-md hover:shadow-gold/20",
   outline:
-    "border border-border bg-transparent text-foreground hover:bg-surface-2",
-  ghost: "bg-transparent text-foreground hover:bg-surface-2",
-  danger: "bg-danger text-white hover:opacity-90",
-  subtle: "bg-surface-2 text-foreground hover:bg-border",
+    "border border-border bg-transparent text-foreground hover:bg-surface-2 transition-all duration-200 hover:border-gold/40 active:scale-[0.98]",
+  ghost: "bg-transparent text-foreground hover:bg-surface-2 transition-colors duration-200 active:scale-[0.98]",
+  danger: "bg-danger text-white hover:opacity-90 transition-opacity active:scale-[0.98]",
+  subtle: "bg-surface-2 text-foreground hover:bg-border transition-colors duration-200 active:scale-[0.98]",
 };
 
 const sizeClasses: Record<Size, string> = {

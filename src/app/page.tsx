@@ -204,11 +204,11 @@ export default async function HomePage() {
         <section className="relative overflow-hidden">
           <div className="absolute inset-0 bg-grid opacity-40" aria-hidden />
           <div
-            className="absolute -top-40 right-1/4 h-96 w-96 rounded-full bg-gold/10 blur-3xl"
+            className="absolute -top-40 right-1/4 h-96 w-96 rounded-full bg-gold/10 blur-3xl animate-pulse-glow"
             aria-hidden
           />
-          <div className="relative mx-auto max-w-6xl px-4 py-24 text-center">
-            <Badge tone="gold" className="mb-6">
+          <div className="relative mx-auto max-w-6xl px-4 py-20 sm:py-24 text-center animate-fade-in-up">
+            <Badge tone="gold" className="mb-6 animate-float shadow-lg shadow-gold/10">
               {t.heroBadge}
             </Badge>
             <h1 className="mx-auto max-w-3xl text-4xl font-extrabold leading-tight sm:text-5xl md:text-6xl">
@@ -221,7 +221,7 @@ export default async function HomePage() {
             </p>
             <div className="mt-10 flex flex-wrap items-center justify-center gap-3">
               <Link href="/products">
-                <Button size="lg">
+                <Button size="lg" className="shadow-lg shadow-gold/20">
                   {t.browseProducts}
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
@@ -242,11 +242,11 @@ export default async function HomePage() {
               const Icon = categoryIcons[i];
               return (
               <Link key={label} href="/products">
-                <Card className="flex h-full flex-col items-center gap-3 p-6 text-center transition-colors hover:border-gold/40">
-                  <span className="grid h-12 w-12 place-items-center rounded-lg bg-gold/10 text-gold">
+                <Card className="card-interactive group flex h-full flex-col items-center gap-3 p-6 text-center">
+                  <span className="grid h-12 w-12 place-items-center rounded-xl bg-gold/10 text-gold transition-transform duration-300 group-hover:scale-110 group-hover:bg-gold/20">
                     <Icon className="h-6 w-6" />
                   </span>
-                  <span className="font-semibold">{label}</span>
+                  <span className="font-semibold group-hover:text-gold transition-colors">{label}</span>
                 </Card>
               </Link>
               );
@@ -290,25 +290,27 @@ export default async function HomePage() {
                     key={p.id}
                     href={`/products/${encodeURIComponent(p.slug)}`}
                   >
-                    <Card className="flex h-full flex-col overflow-hidden transition-colors hover:border-gold/40">
+                    <Card className="card-interactive group flex h-full flex-col overflow-hidden">
                       {p.imageId ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img
-                          src={`/api/products/image/${p.imageId}`}
-                          alt={p.name}
-                          loading="lazy"
-                          className="aspect-video w-full border-b border-border object-cover"
-                        />
+                        <div className="overflow-hidden aspect-video w-full border-b border-border">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={`/api/products/image/${p.imageId}`}
+                            alt={p.name}
+                            loading="lazy"
+                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                        </div>
                       ) : null}
                       <div className="flex flex-1 flex-col p-6">
                       {!p.imageId && (
                         <div className="mb-4 flex items-start justify-between gap-3">
-                          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-gold/10 text-gold">
+                          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-gold/10 text-gold transition-transform duration-300 group-hover:scale-110">
                             <Package className="h-5 w-5" />
                           </span>
                         </div>
                       )}
-                      <h3 className="font-bold">{p.name}</h3>
+                      <h3 className="font-bold group-hover:text-gold transition-colors">{p.name}</h3>
                       <p className="mt-1 text-xs text-muted">{categoryName}</p>
                       {p.description && (
                         <p className="mt-2 line-clamp-2 text-sm text-muted">
