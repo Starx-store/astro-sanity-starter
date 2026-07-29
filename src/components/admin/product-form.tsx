@@ -522,26 +522,28 @@ export function ProductForm({
                         />
                       </Field>
                     </div>
-                    <div className="sm:col-span-3">
-                      <Field label="سعر الـ 1000 للمزوّد $">
-                        <Input
-                          dir="ltr"
-                          inputMode="decimal"
-                          placeholder="مثال: 1.40"
-                          value={p.ratePer1000 ?? p.costPrice ?? ""}
-                          onChange={(e) =>
-                            set(
-                              "packages",
-                              f.packages.map((x, j) =>
-                                j === i
-                                  ? { ...x, ratePer1000: e.target.value, costPrice: e.target.value || "0" }
-                                  : x,
-                              ),
-                            )
-                          }
-                        />
-                      </Field>
-                    </div>
+                    {Boolean(p.providerId) && (
+                      <div className="sm:col-span-3">
+                        <Field label="سعر الـ 1000 للمزوّد $">
+                          <Input
+                            dir="ltr"
+                            inputMode="decimal"
+                            placeholder="مثال: 1.40"
+                            value={p.ratePer1000 ?? p.costPrice ?? ""}
+                            onChange={(e) =>
+                              set(
+                                "packages",
+                                f.packages.map((x, j) =>
+                                  j === i
+                                    ? { ...x, ratePer1000: e.target.value, costPrice: e.target.value || "0" }
+                                    : x,
+                                ),
+                              )
+                            }
+                          />
+                        </Field>
+                      </div>
+                    )}
                     <div className="sm:col-span-3">
                       <Field label="أدنى كمية للزبون">
                         <Input
@@ -616,68 +618,91 @@ export function ProductForm({
                         />
                       </Field>
                     </div>
-                    <div className="sm:col-span-3">
-                      <Field label="الكمية للمزوّد">
-                        <Input
-                          dir="ltr"
-                          inputMode="numeric"
-                          placeholder="مثال: 1000"
-                          value={p.quantity ?? "1000"}
-                          onChange={(e) => {
-                            const newQty = e.target.value;
-                            const rNum = Number(p.ratePer1000) || 0;
-                            const qNum = Number(newQty) || 0;
-                            const calcCost = rNum > 0 && qNum > 0 ? ((rNum * qNum) / 1000).toFixed(4) : (p.costPrice || "0");
-                            set(
-                              "packages",
-                              f.packages.map((x, j) =>
-                                j === i ? { ...x, quantity: newQty, costPrice: calcCost } : x,
-                              ),
-                            );
-                          }}
-                        />
-                      </Field>
-                    </div>
-                    <div className="sm:col-span-3">
-                      <Field label="سعر الـ 1000 للمزوّد $">
-                        <Input
-                          dir="ltr"
-                          inputMode="decimal"
-                          placeholder="مثال: 0.0014"
-                          value={p.ratePer1000 ?? ""}
-                          onChange={(e) => {
-                            const newRate = e.target.value;
-                            const rNum = Number(newRate) || 0;
-                            const qNum = Number(p.quantity || "1000") || 0;
-                            const calcCost = rNum > 0 && qNum > 0 ? ((rNum * qNum) / 1000).toFixed(4) : (p.costPrice || "0");
-                            set(
-                              "packages",
-                              f.packages.map((x, j) =>
-                                j === i ? { ...x, ratePer1000: newRate, costPrice: calcCost } : x,
-                              ),
-                            );
-                          }}
-                        />
-                      </Field>
-                    </div>
-                    <div className="sm:col-span-3">
-                      <Field label="التكلفة الإجمالية عليك $">
-                        <Input
-                          dir="ltr"
-                          inputMode="decimal"
-                          placeholder="مثال: 1.40"
-                          value={p.costPrice ?? "0"}
-                          onChange={(e) =>
-                            set(
-                              "packages",
-                              f.packages.map((x, j) =>
-                                j === i ? { ...x, costPrice: e.target.value } : x,
-                              ),
-                            )
-                          }
-                        />
-                      </Field>
-                    </div>
+                    {Boolean(p.providerId) ? (
+                      <>
+                        <div className="sm:col-span-3">
+                          <Field label="الكمية للمزوّد">
+                            <Input
+                              dir="ltr"
+                              inputMode="numeric"
+                              placeholder="مثال: 1000"
+                              value={p.quantity ?? "1000"}
+                              onChange={(e) => {
+                                const newQty = e.target.value;
+                                const rNum = Number(p.ratePer1000) || 0;
+                                const qNum = Number(newQty) || 0;
+                                const calcCost = rNum > 0 && qNum > 0 ? ((rNum * qNum) / 1000).toFixed(4) : (p.costPrice || "0");
+                                set(
+                                  "packages",
+                                  f.packages.map((x, j) =>
+                                    j === i ? { ...x, quantity: newQty, costPrice: calcCost } : x,
+                                  ),
+                                );
+                              }}
+                            />
+                          </Field>
+                        </div>
+                        <div className="sm:col-span-3">
+                          <Field label="سعر الـ 1000 للمزوّد $">
+                            <Input
+                              dir="ltr"
+                              inputMode="decimal"
+                              placeholder="مثال: 0.0014"
+                              value={p.ratePer1000 ?? ""}
+                              onChange={(e) => {
+                                const newRate = e.target.value;
+                                const rNum = Number(newRate) || 0;
+                                const qNum = Number(p.quantity || "1000") || 0;
+                                const calcCost = rNum > 0 && qNum > 0 ? ((rNum * qNum) / 1000).toFixed(4) : (p.costPrice || "0");
+                                set(
+                                  "packages",
+                                  f.packages.map((x, j) =>
+                                    j === i ? { ...x, ratePer1000: newRate, costPrice: calcCost } : x,
+                                  ),
+                                );
+                              }}
+                            />
+                          </Field>
+                        </div>
+                        <div className="sm:col-span-3">
+                          <Field label="التكلفة الإجمالية عليك $">
+                            <Input
+                              dir="ltr"
+                              inputMode="decimal"
+                              placeholder="مثال: 1.40"
+                              value={p.costPrice ?? "0"}
+                              onChange={(e) =>
+                                set(
+                                  "packages",
+                                  f.packages.map((x, j) =>
+                                    j === i ? { ...x, costPrice: e.target.value } : x,
+                                  ),
+                                )
+                              }
+                            />
+                          </Field>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="sm:col-span-3">
+                        <Field label="التكلفة عليك $">
+                          <Input
+                            dir="ltr"
+                            inputMode="decimal"
+                            placeholder="مثال: 2.00 (اختياري)"
+                            value={p.costPrice ?? "0"}
+                            onChange={(e) =>
+                              set(
+                                "packages",
+                                f.packages.map((x, j) =>
+                                  j === i ? { ...x, costPrice: e.target.value } : x,
+                                ),
+                              )
+                            }
+                          />
+                        </Field>
+                      </div>
+                    )}
                   </>
                 )}
                 <div className="flex items-end gap-2 sm:col-span-2">
