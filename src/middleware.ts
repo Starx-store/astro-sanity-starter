@@ -11,8 +11,7 @@ export function middleware(req: NextRequest) {
   const { pathname, searchParams } = req.nextUrl;
 
   // 1) SMM Panel Root Domain Proxy:
-  // إذا قامت لوحة SMM بالربط عبر الرابط الرئيسي https://evo-storex.com
-  // نقوم بتحويل الطلب داخلياً إلى /api/v2 ليرجع JSON بدلاً من صفحة HTML الرئيسية.
+  // إذا قامت لوحة SMM بالربط عبر الرابط الرئيسي https://evo-storex.com مع برامترات API
   if (
     pathname === "/" &&
     (req.method === "POST" ||
@@ -20,14 +19,17 @@ export function middleware(req: NextRequest) {
       searchParams.has("key") ||
       searchParams.has("service"))
   ) {
-    return NextResponse.rewrite(new URL("/api/v2" + searchParams.toString() ? `?${searchParams.toString()}` : "", req.url));
+    const qs = searchParams.toString();
+    const dest = `/api/v2${qs ? `?${qs}` : ""}`;
+    return NextResponse.rewrite(new URL(dest, req.url));
   }
 
   // 2) Handling trailing slash on API requests without 307/308 redirect
   if (pathname.endsWith("/") && pathname.startsWith("/api/")) {
     const cleanPath = pathname.replace(/\/+$/, "");
-    const queryString = searchParams.toString() ? `?${searchParams.toString()}` : "";
-    return NextResponse.rewrite(new URL(`${cleanPath}${queryString}`, req.url));
+    const qs = searchParams.toString();
+    const dest = `${cleanPath}${qs ? `?${qs}` : ""}`;
+    return NextResponse.rewrite(new URL(dest, req.url));
   }
 
   const hasSession = Boolean(req.cookies.get(SESSION_COOKIE)?.value);
@@ -45,6 +47,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  // كل الصفحات بما فيها / و /api للتعامل مع الفحص المباشر للمزودين.
   matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.).*)"],
 };
