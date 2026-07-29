@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/server/api-keys/service";
 import { db } from "@/server/db";
 import { products, productPackages, productQuantityConfig, categories, orders, wallets } from "@/server/db/schema";
-import { eq, inArray, or } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { createOrder } from "@/server/orders/service";
 import { randomUUID } from "crypto";
 import { displayAmount } from "@/lib/money";
@@ -39,7 +39,7 @@ function getNumericOrderId(ord: { id: string; orderNo: string }): number {
 }
 
 export async function OPTIONS() {
-  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+  return new NextResponse(null, { status: 200, headers: CORS_HEADERS });
 }
 
 export async function GET(req: NextRequest) {
@@ -96,6 +96,7 @@ async function handleRequest(req: NextRequest) {
 
     // --- Action 1: Services Catalog ---
     // Standard SMM Panels fetch services to test provider connection and list catalog.
+    // ALWAYS return HTTP 200 OK for services catalog!
     if (
       action === "services" ||
       action === "service" ||
@@ -106,10 +107,12 @@ async function handleRequest(req: NextRequest) {
     }
 
     // --- Authentication Check ---
+    // Note: SMM panels (PerfectPanel) REQUIRE HTTP 200 OK for error messages.
+    // If HTTP status is != 200 (like 401), PerfectPanel throws "Provider not found"!
     if (!key) {
       return NextResponse.json(
         { error: "API key is required" },
-        { status: 401, headers: CORS_HEADERS }
+        { status: 200, headers: CORS_HEADERS }
       );
     }
 
@@ -117,14 +120,14 @@ async function handleRequest(req: NextRequest) {
     if (!user) {
       return NextResponse.json(
         { error: "Invalid API key" },
-        { status: 401, headers: CORS_HEADERS }
+        { status: 200, headers: CORS_HEADERS }
       );
     }
 
     if (user.status !== "active") {
       return NextResponse.json(
         { error: "Account is inactive" },
-        { status: 403, headers: CORS_HEADERS }
+        { status: 200, headers: CORS_HEADERS }
       );
     }
 
@@ -141,7 +144,7 @@ async function handleRequest(req: NextRequest) {
           balance: wallet ? displayAmount(wallet.balance) : "0.00",
           currency: wallet?.currency || "USD",
         },
-        { headers: CORS_HEADERS }
+        { status: 200, headers: CORS_HEADERS }
       );
     }
 
@@ -154,7 +157,7 @@ async function handleRequest(req: NextRequest) {
       if (!serviceId) {
         return NextResponse.json(
           { error: "Service ID is required" },
-          { status: 400, headers: CORS_HEADERS }
+          { status: 200, headers: CORS_HEADERS }
         );
       }
 
@@ -187,7 +190,7 @@ async function handleRequest(req: NextRequest) {
         } else {
           return NextResponse.json(
             { error: "Service not found" },
-            { status: 404, headers: CORS_HEADERS }
+            { status: 200, headers: CORS_HEADERS }
           );
         }
       }
@@ -214,12 +217,12 @@ async function handleRequest(req: NextRequest) {
 
         return NextResponse.json(
           { order: numericOrderId },
-          { headers: CORS_HEADERS }
+          { status: 200, headers: CORS_HEADERS }
         );
       } catch (err: any) {
         return NextResponse.json(
           { error: err.message || "Failed to create order" },
-          { status: 400, headers: CORS_HEADERS }
+          { status: 200, headers: CORS_HEADERS }
         );
       }
     }
@@ -237,7 +240,7 @@ async function handleRequest(req: NextRequest) {
         if (!ord) {
           return NextResponse.json(
             { error: "Incorrect order ID" },
-            { status: 404, headers: CORS_HEADERS }
+            { status: 200, headers: CORS_HEADERS }
           );
         }
 
@@ -249,7 +252,7 @@ async function handleRequest(req: NextRequest) {
             remains: ord.quantity ? displayAmount(ord.quantity) : "0",
             currency: "USD",
           },
-          { headers: CORS_HEADERS }
+          { status: 200, headers: CORS_HEADERS }
         );
       }
 
@@ -272,12 +275,12 @@ async function handleRequest(req: NextRequest) {
           }
         }
 
-        return NextResponse.json(responseMap, { headers: CORS_HEADERS });
+        return NextResponse.json(responseMap, { status: 200, headers: CORS_HEADERS });
       }
 
       return NextResponse.json(
         { error: "order or orders parameter is required" },
-        { status: 400, headers: CORS_HEADERS }
+        { status: 200, headers: CORS_HEADERS }
       );
     }
 
@@ -293,12 +296,12 @@ async function handleRequest(req: NextRequest) {
         if (!ord) {
           return NextResponse.json(
             { error: "Incorrect order ID" },
-            { status: 404, headers: CORS_HEADERS }
+            { status: 200, headers: CORS_HEADERS }
           );
         }
         return NextResponse.json(
           { refill: String(getNumericOrderId(ord)) },
-          { headers: CORS_HEADERS }
+          { status: 200, headers: CORS_HEADERS }
         );
       }
 
@@ -311,7 +314,7 @@ async function handleRequest(req: NextRequest) {
           }
           return { order: id, refill: { error: "Incorrect order ID" } };
         });
-        return NextResponse.json(responseList, { headers: CORS_HEADERS });
+        return NextResponse.json(responseList, { status: 200, headers: CORS_HEADERS });
       }
     }
 
@@ -323,7 +326,7 @@ async function handleRequest(req: NextRequest) {
       if (refillId) {
         return NextResponse.json(
           { status: "Completed" },
-          { headers: CORS_HEADERS }
+          { status: 200, headers: CORS_HEADERS }
         );
       }
 
@@ -333,7 +336,7 @@ async function handleRequest(req: NextRequest) {
           refill: id,
           status: "Completed",
         }));
-        return NextResponse.json(responseList, { headers: CORS_HEADERS });
+        return NextResponse.json(responseList, { status: 200, headers: CORS_HEADERS });
       }
     }
 
@@ -351,18 +354,18 @@ async function handleRequest(req: NextRequest) {
           }
           return { order: id, cancel: { error: "Incorrect order ID" } };
         });
-        return NextResponse.json(responseList, { headers: CORS_HEADERS });
+        return NextResponse.json(responseList, { status: 200, headers: CORS_HEADERS });
       }
     }
 
     return NextResponse.json(
       { error: "Invalid action" },
-      { status: 400, headers: CORS_HEADERS }
+      { status: 200, headers: CORS_HEADERS }
     );
   } catch (err: any) {
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 200, headers: CORS_HEADERS }
     );
   }
 }
@@ -442,9 +445,9 @@ async function handleServicesCatalog(headers: Record<string, string>) {
       }
     }
 
-    return NextResponse.json(servicesList, { headers });
+    return NextResponse.json(servicesList, { status: 200, headers });
   } catch {
-    return NextResponse.json([], { headers });
+    return NextResponse.json([], { status: 200, headers });
   }
 }
 
