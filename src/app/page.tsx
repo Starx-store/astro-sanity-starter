@@ -13,7 +13,6 @@ import {
   Crown,
   Bot,
   Sparkles,
-  CheckCircle2,
 } from "lucide-react";
 import { db } from "@/server/db";
 import {
@@ -29,7 +28,6 @@ import { getLocale } from "@/server/locale";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
 export const dynamic = "force-dynamic";
@@ -68,7 +66,7 @@ const T = {
         desc: "معالجة آمنة مشفرة للعمليات مع احتساب دقيق للأرصدة من الخادم.",
       },
       {
-        title: "تسليم وتسليم فوري",
+        title: "تسليم فوري ومباشر",
         desc: "منتجات تُسلّم تلقائياً فور الشراء وأخرى بمتابعة دقيقة على مدار الساعة.",
       },
       {
@@ -139,17 +137,20 @@ const categoryIcons = [Gamepad2, Share2, CreditCard, Package];
 /** أحدث المنتجات المتاحة + أدنى سعر لكل منتج */
 async function getShowcase(isTrader: boolean) {
   try {
+    const whereConditions = [
+      ne(products.status, "hidden"),
+      eq(categoriesTable.isVisible, true),
+    ];
+
+    if (!isTrader) {
+      whereConditions.push(eq(products.traderOnly, false));
+    }
+
     const items = await db
       .select({ p: products, categoryName: categoriesTable.name })
       .from(products)
       .innerJoin(categoriesTable, eq(products.categoryId, categoriesTable.id))
-      .where(
-        and(
-          ne(products.status, "hidden"),
-          eq(categoriesTable.isVisible, true),
-          isTrader ? undefined : eq(products.traderOnly, false),
-        ),
-      )
+      .where(and(...whereConditions))
       .orderBy(asc(products.sortOrder), asc(products.name))
       .limit(8);
 
@@ -194,10 +195,24 @@ async function getShowcase(isTrader: boolean) {
 }
 
 export default async function HomePage() {
-  const viewer = await getSessionUser();
-  const { items, startPrices } = await getShowcase(viewer?.isTrader ?? false);
-  const currency = await getSelectedCurrency();
-  const t = T[await getLocale()];
+  let viewer = null;
+  let items: any[] = [];
+  let startPrices = new Map<string, string>();
+  let currency = null;
+  let locale: "ar" | "en" = "ar";
+
+  try {
+    viewer = await getSessionUser();
+    const showcase = await getShowcase(viewer?.isTrader ?? false);
+    items = showcase.items;
+    startPrices = showcase.startPrices;
+    currency = await getSelectedCurrency();
+    locale = await getLocale();
+  } catch (err) {
+    console.error("Error loading HomePage data:", err);
+  }
+
+  const t = T[locale];
 
   return (
     <div className="flex min-h-screen flex-col bg-bg text-foreground selection:bg-gold/30">
