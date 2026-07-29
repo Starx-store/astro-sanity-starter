@@ -9,6 +9,7 @@ import {
   productStockItems,
   providerProducts,
   priceTiers,
+  orders,
 } from "@/server/db/schema";
 import { AppError, isPgError } from "@/server/errors";
 import type { CategoryInput, ProductInput } from "@/server/validation/catalog";
@@ -295,6 +296,40 @@ export async function updateProduct(id: string, input: ProductInput) {
 export async function deleteProduct(
   id: string,
 ): Promise<{ deleted: boolean; archived: boolean }> {
+  // فحص ما إذا كان للمنتج أي طلبات سابقة
+  const [existingOrder] = await db
+    .select({ id: orders.id })
+    .from(orders)
+    .where(eq(orders.productId, id))
+    .limit(1);
+
+  if (existingOrder) {
+    // للمنتج طلبات سابقة ⇒ يُؤرشف (يُخفى) للحفاظ على سجل الطلبات والقيود المالية
+    const [row] = await db
+      .update(products)
+      .set({ status: "hidden", updatedAt: new Date() })
+      .where(eq(products.id, id))
+      .returning({ id: products.id });
+
+    if (!row) {
+      throw new AppError("not_found", "المنتج غير موجود.", 404);
+    }
+
+    // فك الربط بالمزوّد وإزالة المخزون المتاح غير المباع
+    await db.delete(providerProducts).where(eq(providerProducts.productId, id));
+    await db
+      .delete(productStockItems)
+      .where(
+        and(
+          eq(productStockItems.productId, id),
+          eq(productStockItems.status, "available"),
+        ),
+      );
+
+    return { deleted: false, archived: true };
+  }
+
+  // ليس له طلبات سابقة ⇒ يُحذف كلياً
   try {
     const deleted = await db
       .delete(products)
@@ -305,35 +340,13 @@ export async function deleteProduct(
     }
     return { deleted: true, archived: false };
   } catch (e) {
-    if (isPgError(e, "23503")) {
-      const archived = await db.transaction(async (tx) => {
-        const [row] = await tx
-          .update(products)
-          .set({ status: "hidden", updatedAt: new Date() })
-          .where(eq(products.id, id))
-          .returning({ id: products.id });
-        if (!row) return false;
-
-        // فكّ الربط بالمزوّد ووقف مزامنة السعر.
-        await tx
-          .delete(providerProducts)
-          .where(eq(providerProducts.productId, id));
-        // إزالة المخزون المتاح فقط — المُباع سجل تسليم للعملاء.
-        await tx
-          .delete(productStockItems)
-          .where(
-            and(
-              eq(productStockItems.productId, id),
-              eq(productStockItems.status, "available"),
-            ),
-          );
-        return true;
-      });
-      if (!archived) {
-        throw new AppError("not_found", "المنتج غير موجود.", 404);
-      }
-      return { deleted: false, archived: true };
-    }
-    throw e;
+    // احتياط لقيد المفاتيح الأجنبية
+    const [row] = await db
+      .update(products)
+      .set({ status: "hidden", updatedAt: new Date() })
+      .where(eq(products.id, id))
+      .returning({ id: products.id });
+    if (!row) throw new AppError("not_found", "المنتج غير موجود.", 404);
+    return { deleted: false, archived: true };
   }
 }
