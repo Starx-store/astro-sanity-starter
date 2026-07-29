@@ -73,9 +73,27 @@ export interface TierInfo {
 }
 
 export async function getUserTierInfo(userId: string): Promise<TierInfo> {
+  const [u] = await db
+    .select({ membershipTier: users.membershipTier, isTrader: users.isTrader })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
   const spent = await getUserSpentUsd(userId);
-  const tier = resolveTier(spent);
+  let tier: Tier = resolveTier(spent);
+
+  if (u?.membershipTier === "platinum" || u?.membershipTier === "gold") {
+    tier = "gold";
+  } else if (u?.membershipTier === "silver") {
+    tier = "silver";
+  }
+
   const discounts = await getTierDiscounts();
+  let discountPercent = discounts[tier];
+
+  if (u?.membershipTier === "platinum") discountPercent = 10;
+  else if (u?.membershipTier === "gold") discountPercent = 5;
+  else if (u?.membershipTier === "silver") discountPercent = 3;
 
   let nextTier: Tier | null = null;
   let nextThreshold: number | null = null;
@@ -90,7 +108,7 @@ export async function getUserTierInfo(userId: string): Promise<TierInfo> {
   return {
     spent,
     tier,
-    discountPercent: discounts[tier],
+    discountPercent,
     discounts,
     nextTier,
     nextThreshold,
