@@ -72,8 +72,15 @@ async function handleRequest(req: NextRequest) {
     const action = String(body.action || "").trim().toLowerCase();
 
     // --- Action: Services Catalog ---
-    // Standard SMM Panels fetch services to list provider packages.
-    if (action === "services" || action === "service") {
+    // Standard SMM Panels (PerfectPanel, SmartPanel, etc.) ping the provider URL
+    // to check for services. If action is services or empty or unauthenticated,
+    // return the services catalog array so provider check passes 100%.
+    if (
+      action === "services" ||
+      action === "service" ||
+      (!action && !key) ||
+      (action !== "balance" && action !== "add" && action !== "status" && !key)
+    ) {
       return await handleServicesCatalog(CORS_HEADERS);
     }
 
