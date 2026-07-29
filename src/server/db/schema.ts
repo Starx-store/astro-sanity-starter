@@ -173,6 +173,7 @@ export const users = pgTable(
     twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
     // باقة التاجر — يعيّنها الأدمن يدويًا؛ تمنح السعر الخاص بالتجار حيث حُدّد.
     isTrader: boolean("is_trader").notNull().default(false),
+    membershipTier: text("membership_tier").notNull().default("standard"), // standard | silver | gold | platinum
     referralCode: text("referral_code"),
     failedLoginCount: integer("failed_login_count").notNull().default(0),
     lockedUntil: timestamp("locked_until", { withTimezone: true }),

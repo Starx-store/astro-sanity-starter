@@ -140,13 +140,13 @@ export default async function AdminUserDetailPage(
         <div className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="text-base">باقة التاجر</CardTitle>
+              <CardTitle className="text-base">باقة العضوية والرتبة</CardTitle>
               <CardDescription>
-                أسعار خاصة تُحدد داخل كل منتج — ليست نسبة خصم.
+                اختر الباقة المناسبة للعميل (عادي، فضية، ذهبية، ماسية VIP).
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <TraderToggle userId={user.id} isTrader={user.isTrader} />
+              <TraderToggle userId={user.id} isTrader={user.isTrader} membershipTier={user.membershipTier} />
             </CardContent>
           </Card>
 

@@ -91,9 +91,18 @@ export default async function AdminUsersPage(
                         {u.email}
                       </td>
                       <td className="px-4 py-3">
-                        <Badge tone={u.role === "customer" ? "neutral" : "gold"}>
-                          {ROLE_LABELS[u.role] ?? u.role}
-                        </Badge>
+                        <div className="flex flex-col gap-1">
+                          <Badge tone={u.role === "customer" ? "neutral" : "gold"}>
+                            {ROLE_LABELS[u.role] ?? u.role}
+                          </Badge>
+                          {u.membershipTier === "platinum" ? (
+                            <Badge tone="gold">💎 ماسية VIP</Badge>
+                          ) : u.membershipTier === "gold" || u.isTrader ? (
+                            <Badge tone="gold">🥇 ذهبية</Badge>
+                          ) : u.membershipTier === "silver" ? (
+                            <Badge tone="neutral">🥈 فضية</Badge>
+                          ) : null}
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <Badge tone={u.status === "active" ? "success" : "danger"}>
