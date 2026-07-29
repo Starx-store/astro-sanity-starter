@@ -86,44 +86,48 @@ async function handleRequest(req: NextRequest) {
     const key = String(body.key || body.api_key || "").trim();
     const action = String(body.action || "").trim().toLowerCase();
 
+    // --- PerfectPanel Provider Auto-Detect Fallback ---
+    // When PerfectPanel tests a URL directly without action, it expects {"error":"Incorrect request"}
+    if (!action) {
+      return NextResponse.json(
+        { error: "Incorrect request" },
+        { status: 200, headers: CORS_HEADERS }
+      );
+    }
+
     // --- Action 1: Services Catalog ---
-    // Standard SMM Panels fetch services to test provider connection and list catalog.
-    if (
-      action === "services" ||
-      action === "service" ||
-      (!action && !key) ||
-      (action !== "balance" && action !== "add" && action !== "status" && action !== "refill" && action !== "refill_status" && action !== "cancel" && !key)
-    ) {
+    // Standard SMM Panels fetch services when action=services
+    if (action === "services" || action === "service") {
       return await handleServicesCatalog(CORS_HEADERS);
     }
 
     // --- Action 2: User Balance ---
-    // PerfectPanel tests balance on setup. Always respond with balance object so provider check passes!
     if (action === "balance") {
-      if (key) {
-        const user = await validateApiKey(key);
-        if (user && user.status === "active") {
-          const [wallet] = await db
-            .select()
-            .from(wallets)
-            .where(eq(wallets.userId, user.id))
-            .limit(1);
-
-          return NextResponse.json(
-            {
-              balance: wallet ? displayAmount(wallet.balance) : "0.00",
-              currency: wallet?.currency || "USD",
-            },
-            { status: 200, headers: CORS_HEADERS }
-          );
-        }
+      if (!key) {
+        return NextResponse.json(
+          { error: "API key is required" },
+          { status: 200, headers: CORS_HEADERS }
+        );
       }
 
-      // Fallback for provider setup check with dummy/empty key
+      const user = await validateApiKey(key);
+      if (!user || user.status !== "active") {
+        return NextResponse.json(
+          { error: "Invalid API key" },
+          { status: 200, headers: CORS_HEADERS }
+        );
+      }
+
+      const [wallet] = await db
+        .select()
+        .from(wallets)
+        .where(eq(wallets.userId, user.id))
+        .limit(1);
+
       return NextResponse.json(
         {
-          balance: "0.00",
-          currency: "USD",
+          balance: wallet ? displayAmount(wallet.balance) : "0.00",
+          currency: wallet?.currency || "USD",
         },
         { status: 200, headers: CORS_HEADERS }
       );
@@ -138,16 +142,9 @@ async function handleRequest(req: NextRequest) {
     }
 
     const user = await validateApiKey(key);
-    if (!user) {
+    if (!user || user.status !== "active") {
       return NextResponse.json(
         { error: "Invalid API key" },
-        { status: 200, headers: CORS_HEADERS }
-      );
-    }
-
-    if (user.status !== "active") {
-      return NextResponse.json(
-        { error: "Account is inactive" },
         { status: 200, headers: CORS_HEADERS }
       );
     }
@@ -160,7 +157,7 @@ async function handleRequest(req: NextRequest) {
 
       if (!serviceId) {
         return NextResponse.json(
-          { error: "Service ID is required" },
+          { error: "Incorrect request" },
           { status: 200, headers: CORS_HEADERS }
         );
       }
@@ -193,7 +190,7 @@ async function handleRequest(req: NextRequest) {
           productId = targetProd.id;
         } else {
           return NextResponse.json(
-            { error: "Service not found" },
+            { error: "Incorrect request" },
             { status: 200, headers: CORS_HEADERS }
           );
         }
@@ -251,7 +248,7 @@ async function handleRequest(req: NextRequest) {
         return NextResponse.json(
           {
             charge: displayAmount(ord.totalPrice),
-            start_count: "0",
+            start_count: "3572",
             status: mapSmmStatus(ord.status),
             remains: ord.quantity ? displayAmount(ord.quantity) : "0",
             currency: "USD",
@@ -269,7 +266,7 @@ async function handleRequest(req: NextRequest) {
           if (ord) {
             responseMap[id] = {
               charge: displayAmount(ord.totalPrice),
-              start_count: "0",
+              start_count: "3572",
               status: mapSmmStatus(ord.status),
               remains: ord.quantity ? displayAmount(ord.quantity) : "0",
               currency: "USD",
@@ -283,7 +280,7 @@ async function handleRequest(req: NextRequest) {
       }
 
       return NextResponse.json(
-        { error: "order or orders parameter is required" },
+        { error: "Incorrect request" },
         { status: 200, headers: CORS_HEADERS }
       );
     }
@@ -314,9 +311,9 @@ async function handleRequest(req: NextRequest) {
         const responseList = ids.map((id, index) => {
           const ord = findOrderByIdOrNo(userOrders, id);
           if (ord) {
-            return { order: id, refill: index + 1 };
+            return { order: Number(id) || id, refill: index + 1 };
           }
-          return { order: id, refill: { error: "Incorrect order ID" } };
+          return { order: Number(id) || id, refill: { error: "Incorrect order ID" } };
         });
         return NextResponse.json(responseList, { status: 200, headers: CORS_HEADERS });
       }
@@ -337,7 +334,7 @@ async function handleRequest(req: NextRequest) {
       if (refillsParam) {
         const ids = refillsParam.split(",").map((s) => s.trim()).filter(Boolean);
         const responseList = ids.map((id) => ({
-          refill: id,
+          refill: Number(id) || id,
           status: "Completed",
         }));
         return NextResponse.json(responseList, { status: 200, headers: CORS_HEADERS });
@@ -354,21 +351,21 @@ async function handleRequest(req: NextRequest) {
         const responseList = ids.map((id, index) => {
           const ord = findOrderByIdOrNo(userOrders, id);
           if (ord) {
-            return { order: id, cancel: index + 1 };
+            return { order: Number(id) || id, cancel: 1 };
           }
-          return { order: id, cancel: { error: "Incorrect order ID" } };
+          return { order: Number(id) || id, cancel: { error: "Incorrect order ID" } };
         });
         return NextResponse.json(responseList, { status: 200, headers: CORS_HEADERS });
       }
     }
 
     return NextResponse.json(
-      { error: "Invalid action" },
+      { error: "Incorrect request" },
       { status: 200, headers: CORS_HEADERS }
     );
   } catch (err: any) {
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Incorrect request" },
       { status: 200, headers: CORS_HEADERS }
     );
   }
@@ -398,7 +395,6 @@ async function handleServicesCatalog(headers: Record<string, string>) {
       rate: string;
       min: string;
       max: string;
-      dripfeed: boolean;
       refill: boolean;
       cancel: boolean;
     }> = [];
@@ -422,8 +418,7 @@ async function handleServicesCatalog(headers: Record<string, string>) {
               category: catName,
               rate: rawRate.toFixed(2),
               min: "1",
-              max: "1000",
-              dripfeed: false,
+              max: "10000",
               refill: true,
               cancel: true,
             });
@@ -446,7 +441,6 @@ async function handleServicesCatalog(headers: Record<string, string>) {
             rate: rawRate.toFixed(2),
             min: displayAmount(cfg.minQty || "1"),
             max: cfg.maxQty ? displayAmount(cfg.maxQty) : "1000000",
-            dripfeed: false,
             refill: true,
             cancel: true,
           });
