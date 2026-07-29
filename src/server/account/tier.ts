@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/server/db";
-import { orders } from "@/server/db/schema";
+import { orders, users } from "@/server/db/schema";
 import { getSetting } from "@/server/settings/service";
 
 /**
@@ -103,6 +103,16 @@ export async function getUserTierInfo(userId: string): Promise<TierInfo> {
 export async function getUserOrderDiscountPercent(
   userId: string,
 ): Promise<number> {
+  const [u] = await db
+    .select({ membershipTier: users.membershipTier, isTrader: users.isTrader })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (u?.membershipTier === "platinum") return 10;
+  if (u?.membershipTier === "gold") return 5;
+  if (u?.membershipTier === "silver") return 3;
+
   const spent = await getUserSpentUsd(userId);
   const tier = resolveTier(spent);
   if (tier === "bronze") return 0;

@@ -2,19 +2,19 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Award, Check } from "lucide-react";
+import { Store, Award, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import { apiPost } from "@/lib/api-client";
 
 const TIERS = [
-  { id: "standard", label: "⚪ عضوية عادية (Standard)", desc: "أسعار الشراء العادية للمستهلك" },
-  { id: "silver", label: "🥈 الباقة الفضية (Silver)", desc: "خصومات وخيارات تجار فضية" },
-  { id: "gold", label: "🥇 الباقة الذهبية (Gold Trader)", desc: "أسعار باقة التاجر المخصصة للمنتجات" },
-  { id: "platinum", label: "💎 الباقة الماسية VIP (Platinum)", desc: "أعلى أولوية وأفضل أسعار جملة للموزعين" },
+  { id: "standard", label: "⚪ عضوية عادية (Standard)", desc: "سعر المستهلك الأساسي (بدون خصم خاص)" },
+  { id: "silver", label: "🥈 الباقة الفضية (Silver)", desc: "خصم إضافي 3% تلقائي على جميع الطلبات" },
+  { id: "gold", label: "🥇 الباقة الذهبية (Gold Trader)", desc: "تفعيل أسعار باقة التاجر الخاصة للمنتجات + 5% خصم" },
+  { id: "platinum", label: "💎 الباقة الماسية VIP (Platinum)", desc: "أسعار التاجر الخاصة + خصم 10% VIP للموزعين" },
 ] as const;
 
-/** تفعيل/تغيير باقة العضوية ورتبة الحساب (عادي، فضي، ذهبي، ماسي) */
+/** تفعيل/تغيير باقة التاجر والعضوية لعميل */
 export function TraderToggle({
   userId,
   isTrader,
@@ -31,12 +31,19 @@ export function TraderToggle({
     membershipTier || (isTrader ? "gold" : "standard")
   );
 
-  async function updateTier(newTier: string) {
+  async function toggleTraderDirect() {
+    const nextIsTrader = !isTrader;
+    const nextTier = nextIsTrader ? "gold" : "standard";
+    await updateTier(nextTier, nextIsTrader);
+  }
+
+  async function updateTier(newTier: string, forceIsTrader?: boolean) {
     setLoading(true);
     setError(null);
+    const traderFlag = typeof forceIsTrader === "boolean" ? forceIsTrader : newTier !== "standard";
     const res = await apiPost<{ isTrader: boolean; membershipTier: string }>(
       `/api/admin/users/${userId}/trader`,
-      { membershipTier: newTier, isTrader: newTier !== "standard" }
+      { membershipTier: newTier, isTrader: traderFlag }
     );
     setLoading(false);
     if (res.ok) {
@@ -48,11 +55,26 @@ export function TraderToggle({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {error && <Alert tone="danger">{error}</Alert>}
       
+      {/* 1) Direct Trader Toggle Button */}
+      <Button
+        variant={isTrader ? "outline" : "subtle"}
+        size="md"
+        className="w-full justify-center font-bold"
+        loading={loading}
+        onClick={toggleTraderDirect}
+      >
+        <Store className="h-4 w-4" />
+        {isTrader ? "إلغاء حساب التاجر (إعادة لعادي)" : "⚡ تفعيل حساب تاجر فوراً"}
+      </Button>
+
+      <hr className="border-border/60" />
+
+      {/* 2) Detailed Tier Selection */}
       <div className="space-y-2">
-        <label className="text-xs font-semibold text-muted">اختر باقة العضوية للمستخدم:</label>
+        <label className="text-xs font-bold text-foreground">تحديد رتبة وباقة العضوية بالتفصيل:</label>
         <div className="grid gap-2">
           {TIERS.map((t) => {
             const active = currentTier === t.id;
@@ -69,7 +91,7 @@ export function TraderToggle({
                 }`}
               >
                 <div>
-                  <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                  <div className="flex items-center gap-1.5 font-bold text-foreground">
                     <Award className={`h-4 w-4 ${active ? "text-gold" : "text-muted"}`} />
                     {t.label}
                   </div>
