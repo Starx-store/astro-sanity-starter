@@ -19,6 +19,7 @@ export function SettingsForm({
     maintenance: boolean;
     silverDiscount: string;
     goldDiscount: string;
+    platinumDiscount: string;
     sarRate: string;
     yersRate: string;
     yeroRate: string;
@@ -107,7 +108,7 @@ export function SettingsForm({
           يُرقّى العميل تلقائيًا حسب إنفاقه: فضية عند تجاوز 100$، ذهبية عند تجاوز
           500$. تُطبّق النسبة تلقائيًا على أسعار طلباته.
         </p>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-3">
           <Field label="خصم الباقة الفضية ٪" error={errors.silverDiscount}>
             <Input
               dir="ltr"
@@ -122,6 +123,14 @@ export function SettingsForm({
               inputMode="decimal"
               value={f.goldDiscount}
               onChange={(e) => setF({ ...f, goldDiscount: e.target.value })}
+            />
+          </Field>
+          <Field label="خصم الباقة الماسية VIP ٪" error={errors.platinumDiscount}>
+            <Input
+              dir="ltr"
+              inputMode="decimal"
+              value={f.platinumDiscount}
+              onChange={(e) => setF({ ...f, platinumDiscount: e.target.value })}
             />
           </Field>
         </div>

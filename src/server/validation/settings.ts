@@ -28,6 +28,7 @@ export const settingsSchema = z.object({
   // خصومات فئات العضوية (٪) — تُطبّق تلقائيًا على أسعار الطلبات.
   silverDiscount: percent,
   goldDiscount: percent,
+  platinumDiscount: percent,
   // أسعار صرف عملات العرض (كم وحدة مقابل 1$) — 0 أو فارغ = معطّلة.
   sarRate: z.coerce.number().min(0).max(1_000_000).default(0),
   yersRate: z.coerce.number().min(0).max(1_000_000).default(0),

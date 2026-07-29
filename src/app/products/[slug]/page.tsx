@@ -13,6 +13,7 @@ import {
   wallets,
 } from "@/server/db/schema";
 import { getSessionUser } from "@/server/auth/session";
+import { getUserOrderDiscountPercent } from "@/server/account/tier";
 import { getSelectedCurrency } from "@/server/currency";
 import { getLocale } from "@/server/locale";
 import { requiredFieldDefSchema } from "@/server/validation/catalog";
@@ -138,6 +139,7 @@ export default async function ProductPage(
 
   // باقة التاجر: يُعرض له سعره الفعلي (نفس ما سيُحاسَب به الخادم تمامًا).
   const isTrader = user?.isTrader ?? false;
+  const discountPct = user ? await getUserOrderDiscountPercent(user.id) : 0;
   const traderHasQtyPrice =
     isTrader &&
     !!qtyCfg &&
@@ -220,18 +222,26 @@ export default async function ProductPage(
                   productName={product.name}
                   productType={product.type}
                   orderable={product.status === "active"}
-                  packages={pkgs.map((p) => ({
-                    id: p.id,
-                    name: p.name,
-                    description: p.description,
-                    salePrice:
-                      myPrices.find((c) => c.packageId === p.id)?.price ??
-                      (isTrader && p.traderPrice ? p.traderPrice : p.salePrice),
-                    packageType: (p.packageType as "fixed" | "quantity") ?? "fixed",
-                    pricePer1000: isTrader && p.traderPricePer1000 ? p.traderPricePer1000 : p.pricePer1000,
-                    minQty: p.minQty ? displayAmount(p.minQty) : "1",
-                    maxQty: p.maxQty ? displayAmount(p.maxQty) : null,
-                  }))}
+                  packages={pkgs.map((p) => {
+                    const custom = myPrices.find((c) => c.packageId === p.id);
+                    let basePrice = custom?.price ?? (isTrader && p.traderPrice ? p.traderPrice : p.salePrice);
+                    if (!custom && discountPct > 0) {
+                      const num = Number(basePrice);
+                      if (!isNaN(num) && num > 0) {
+                        basePrice = (num * (1 - discountPct / 100)).toFixed(4);
+                      }
+                    }
+                    return {
+                      id: p.id,
+                      name: p.name,
+                      description: p.description,
+                      salePrice: basePrice,
+                      packageType: (p.packageType as "fixed" | "quantity") ?? "fixed",
+                      pricePer1000: isTrader && p.traderPricePer1000 ? p.traderPricePer1000 : p.pricePer1000,
+                      minQty: p.minQty ? displayAmount(p.minQty) : "1",
+                      maxQty: p.maxQty ? displayAmount(p.maxQty) : null,
+                    };
+                  })}
                   qty={
                     qtyCfg
                       ? {

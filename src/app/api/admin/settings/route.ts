@@ -19,6 +19,7 @@ export async function POST(req: Request) {
       setSetting("store.maintenance", parsed.data.maintenance),
       setSetting("tiers.silver_discount", parsed.data.silverDiscount),
       setSetting("tiers.gold_discount", parsed.data.goldDiscount),
+      setSetting("tiers.platinum_discount", parsed.data.platinumDiscount),
       setSetting("currencies.sar_rate", parsed.data.sarRate),
       setSetting("currencies.yers_rate", parsed.data.yersRate),
       setSetting("currencies.yero_rate", parsed.data.yeroRate),

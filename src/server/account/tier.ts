@@ -57,8 +57,8 @@ export function resolveTier(spentUsd: number): Tier {
 /** نسب خصم الفئات كما يحددها الأدمن (٪). */
 export async function getTierDiscounts(): Promise<Record<Tier, number>> {
   const clamp = (n: number) => Math.min(100, Math.max(0, n)) || 0;
-  const silver = Number(await getSetting<number | string>("tiers.silver_discount", 0));
-  const gold = Number(await getSetting<number | string>("tiers.gold_discount", 0));
+  const silver = Number(await getSetting<number | string>("tiers.silver_discount", 3));
+  const gold = Number(await getSetting<number | string>("tiers.gold_discount", 5));
   return { bronze: 0, silver: clamp(silver), gold: clamp(gold) };
 }
 
@@ -127,10 +127,14 @@ export async function getUserOrderDiscountPercent(
     .where(eq(users.id, userId))
     .limit(1);
 
+  const silverDiscount = Number(await getSetting<number | string>("tiers.silver_discount", 3));
+  const goldDiscount = Number(await getSetting<number | string>("tiers.gold_discount", 5));
+  const platinumDiscount = Number(await getSetting<number | string>("tiers.platinum_discount", 10));
+
+  if (u?.membershipTier === "platinum") return Math.min(100, Math.max(0, platinumDiscount));
+  if (u?.membershipTier === "gold") return Math.min(100, Math.max(0, goldDiscount));
+  if (u?.membershipTier === "silver") return Math.min(100, Math.max(0, silverDiscount));
   if (u?.membershipTier === "trader") return 0;
-  if (u?.membershipTier === "platinum") return 10;
-  if (u?.membershipTier === "gold") return 5;
-  if (u?.membershipTier === "silver") return 3;
 
   const spent = await getUserSpentUsd(userId);
   const tier = resolveTier(spent);
