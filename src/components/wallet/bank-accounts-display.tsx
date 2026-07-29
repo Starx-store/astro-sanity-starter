@@ -43,7 +43,7 @@ export function BankAccountsDisplay({ accounts }: { accounts: BankAccount[] }) {
 
   if (!accounts || accounts.length === 0) {
     return (
-      <Card className="p-6 text-center text-gray-500">
+      <Card className="p-6 text-center text-muted">
         {t.empty}
       </Card>
     );
@@ -51,53 +51,53 @@ export function BankAccountsDisplay({ accounts }: { accounts: BankAccount[] }) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold">{t.title}</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <h2 className="text-lg sm:text-xl font-bold">{t.title}</h2>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {accounts.map((account) => (
-          <Card key={account.id} className="p-4 relative overflow-hidden">
-            <div className="absolute top-0 right-0 w-2 h-full bg-primary/80" />
-            <h3 className="font-bold text-lg mb-4">{account.bankName}</h3>
-            
+          <Card key={account.id} className="relative overflow-hidden p-4 sm:p-5 border border-border bg-surface shadow-sm">
+            <div className="absolute top-0 right-0 h-full w-1.5 bg-gold/90" />
+            <h3 className="mb-3 text-base sm:text-lg font-bold text-foreground break-words">{account.bankName}</h3>
+
             <div className="space-y-3 text-sm">
               <div className="flex flex-col">
-                <span className="text-gray-500 dark:text-gray-400">{t.accountName}</span>
-                <span className="font-medium">{account.accountName}</span>
+                <span className="text-xs text-muted">{t.accountName}</span>
+                <span className="font-medium text-foreground break-words">{account.accountName}</span>
               </div>
-              
+
               <div className="flex flex-col">
-                <span className="text-gray-500 dark:text-gray-400">{t.accountNumber}</span>
+                <span className="text-xs text-muted">{t.accountNumber}</span>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium font-mono text-base">{account.accountNumber}</span>
-                  <Button 
-                    size="icon" 
-                    variant="ghost" 
-                    className="h-8 w-8 text-gray-500 hover:text-primary"
+                  <span className="font-medium font-mono text-sm sm:text-base break-all text-foreground">{account.accountNumber}</span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-8 w-8 shrink-0 text-muted hover:text-gold"
                     onClick={() => copyToClipboard(account.accountNumber, `acc_${account.id}`)}
                   >
-                    {copiedId === `acc_${account.id}` ? <span className="text-xs text-green-500">{t.copied}</span> : <Copy className="h-4 w-4" />}
+                    {copiedId === `acc_${account.id}` ? <span className="text-xs font-bold text-emerald-500">{t.copied}</span> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
               </div>
 
               {account.iban && (
                 <div className="flex flex-col">
-                  <span className="text-gray-500 dark:text-gray-400">{t.iban}</span>
+                  <span className="text-xs text-muted">{t.iban}</span>
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium font-mono text-xs">{account.iban}</span>
-                    <Button 
-                      size="icon" 
-                      variant="ghost" 
-                      className="h-8 w-8 text-gray-500 hover:text-primary"
+                    <span className="font-medium font-mono text-xs sm:text-sm break-all text-foreground">{account.iban}</span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8 shrink-0 text-muted hover:text-gold"
                       onClick={() => copyToClipboard(account.iban!, `iban_${account.id}`)}
                     >
-                      {copiedId === `iban_${account.id}` ? <span className="text-xs text-green-500">{t.copied}</span> : <Copy className="h-4 w-4" />}
+                      {copiedId === `iban_${account.id}` ? <span className="text-xs font-bold text-emerald-500">{t.copied}</span> : <Copy className="h-4 w-4" />}
                     </Button>
                   </div>
                 </div>
               )}
-              
+
               {account.notes && (
-                <div className="mt-2 text-xs text-gray-500 bg-gray-50 dark:bg-gray-900 p-2 rounded">
+                <div className="mt-3 rounded-lg border border-border/60 bg-surface-2/80 p-3 text-xs leading-relaxed text-muted break-words whitespace-pre-wrap">
                   {account.notes}
                 </div>
               )}

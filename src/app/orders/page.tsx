@@ -82,54 +82,86 @@ export default async function OrdersPage() {
             </CardContent>
           </Card>
         ) : (
-          <Card>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[640px] text-sm">
-                  <thead>
-                    <tr className="border-b border-border bg-surface-2/60 text-right text-xs text-muted">
-                      <th className="px-4 py-3 font-medium">{t.thOrderNo}</th>
-                      <th className="px-4 py-3 font-medium">{t.thProduct}</th>
-                      <th className="px-4 py-3 font-medium">{t.thTotal}</th>
-                      <th className="px-4 py-3 font-medium">{t.thStatus}</th>
-                      <th className="px-4 py-3 font-medium">{t.thDate}</th>
-                      <th className="px-4 py-3 font-medium" />
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map(({ o, productName }) => {
-                      const st = orderStatusLabel(o.status, locale);
-                      return (
-                        <tr key={o.id} className="border-b border-border/60 last:border-0">
-                          <td className="whitespace-nowrap px-4 py-3 font-mono text-xs" dir="ltr">
-                            {o.orderNo}
-                          </td>
-                          <td className="px-4 py-3 font-medium">{productName}</td>
-                          <td className="whitespace-nowrap px-4 py-3 font-semibold" dir="ltr">
-                            {displayAmount(o.totalPrice)}$
-                          </td>
-                          <td className="px-4 py-3">
-                            <Badge tone={st.tone}>{st.label}</Badge>
-                          </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-xs text-muted">
-                            {formatDate(o.createdAt)}
-                          </td>
-                          <td className="px-4 py-3">
-                            <Link
-                              href={`/orders/${o.id}`}
-                              className="text-sm font-medium text-gold hover:underline"
-                            >
-                              {t.details}
-                            </Link>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            {/* عرض الجوال (بطاقات أنيقة) */}
+            <div className="space-y-3 sm:hidden">
+              {rows.map(({ o, productName }) => {
+                const st = orderStatusLabel(o.status, locale);
+                return (
+                  <Card key={o.id} className="p-4 border border-border bg-surface shadow-sm">
+                    <div className="flex items-center justify-between border-b border-border/50 pb-2">
+                      <span className="font-mono text-xs font-bold text-gold" dir="ltr">
+                        #{o.orderNo}
+                      </span>
+                      <Badge tone={st.tone}>{st.label}</Badge>
+                    </div>
+                    <div className="mt-3 space-y-1 text-sm">
+                      <p className="font-bold text-foreground">{productName}</p>
+                      <div className="flex items-center justify-between text-xs text-muted pt-1">
+                        <span>{formatDate(o.createdAt)}</span>
+                        <span className="font-extrabold text-foreground text-sm" dir="ltr">{displayAmount(o.totalPrice)}$</span>
+                      </div>
+                    </div>
+                    <div className="mt-3 pt-2 border-t border-border/40 text-left">
+                      <Link href={`/orders/${o.id}`} className="text-xs font-semibold text-gold hover:underline">
+                        {t.details} ←
+                      </Link>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+
+            {/* عرض الشاشات المتوسطة والكبيرة (جدول) */}
+            <Card className="hidden sm:block">
+              <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                  <table className="w-full min-w-[640px] text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-surface-2/60 text-right text-xs text-muted">
+                        <th className="px-4 py-3 font-medium">{t.thOrderNo}</th>
+                        <th className="px-4 py-3 font-medium">{t.thProduct}</th>
+                        <th className="px-4 py-3 font-medium">{t.thTotal}</th>
+                        <th className="px-4 py-3 font-medium">{t.thStatus}</th>
+                        <th className="px-4 py-3 font-medium">{t.thDate}</th>
+                        <th className="px-4 py-3 font-medium" />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map(({ o, productName }) => {
+                        const st = orderStatusLabel(o.status, locale);
+                        return (
+                          <tr key={o.id} className="border-b border-border/60 last:border-0">
+                            <td className="whitespace-nowrap px-4 py-3 font-mono text-xs" dir="ltr">
+                              {o.orderNo}
+                            </td>
+                            <td className="px-4 py-3 font-medium">{productName}</td>
+                            <td className="whitespace-nowrap px-4 py-3 font-semibold" dir="ltr">
+                              {displayAmount(o.totalPrice)}$
+                            </td>
+                            <td className="px-4 py-3">
+                              <Badge tone={st.tone}>{st.label}</Badge>
+                            </td>
+                            <td className="whitespace-nowrap px-4 py-3 text-xs text-muted">
+                              {formatDate(o.createdAt)}
+                            </td>
+                            <td className="px-4 py-3">
+                              <Link
+                                href={`/orders/${o.id}`}
+                                className="text-sm font-medium text-gold hover:underline"
+                              >
+                                {t.details}
+                              </Link>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </>
         )}
       </main>
     </div>
