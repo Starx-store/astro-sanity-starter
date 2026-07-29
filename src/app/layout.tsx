@@ -83,7 +83,7 @@ export default async function RootLayout({
       <head>
         <ThemeScript />
       </head>
-      <body className="min-h-screen bg-bg font-sans text-foreground antialiased">
+      <body className="min-h-screen w-full max-w-full overflow-x-hidden bg-bg font-sans text-foreground antialiased">
         {gate.blocked ? (
           <MaintenanceScreen storeName={gate.storeName} />
         ) : (

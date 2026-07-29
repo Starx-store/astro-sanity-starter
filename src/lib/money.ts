@@ -38,10 +38,15 @@ export function toDbAmount(v: bigint): string {
   return `${neg ? "-" : ""}${whole}.${frac}`;
 }
 
-/** عرض مختصر للمستخدم: يحذف الأصفار الزائدة (100.00000000 → 100). */
-export function displayAmount(v: string | bigint): string {
+/** عرض مختصر للمستخدم: يحذف الأصفار الزائدة (100.00000000 → 100) ويُحدّد الكسور اختيارياً. */
+export function displayAmount(v: string | bigint, maxDecimals?: number): string {
   const s = typeof v === "bigint" ? toDbAmount(v) : String(v);
   if (!s.includes(".")) return s;
+  const [whole, frac] = s.split(".");
+  if (maxDecimals !== undefined) {
+    const trimmedFrac = frac.slice(0, maxDecimals).replace(/0+$/, "");
+    return trimmedFrac ? `${whole}.${trimmedFrac}` : whole;
+  }
   const trimmed = s.replace(/0+$/, "").replace(/\.$/, "");
   return trimmed === "" || trimmed === "-" ? "0" : trimmed;
 }

@@ -120,17 +120,17 @@ export default async function WalletPage() {
     {
       Icon: Coins,
       label: t.available,
-      value: displayAmount(available),
+      value: displayAmount(available, 2),
       highlight: true,
     },
-    { Icon: WalletIcon, label: t.total, value: displayAmount(balance) },
-    { Icon: Lock, label: t.held, value: displayAmount(held) },
+    { Icon: WalletIcon, label: t.total, value: displayAmount(balance, 2) },
+    { Icon: Lock, label: t.held, value: displayAmount(held, 2) },
   ];
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen w-full max-w-full flex-col overflow-x-hidden">
       <SiteHeader />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 pb-24 sm:pb-12">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-10 pb-24 sm:pb-12 overflow-x-hidden">
         <div className="mb-8">
           <h1 className="text-2xl font-bold">{t.title}</h1>
           <p className="text-sm text-muted">{t.subtitle}</p>
@@ -139,15 +139,15 @@ export default async function WalletPage() {
         {/* بطاقات الرصيد */}
         <div className="grid gap-4 sm:grid-cols-3">
           {stats.map(({ Icon, label, value, highlight }) => (
-            <Card key={label}>
-              <CardContent className="flex items-center gap-4 p-6">
+            <Card key={label} className="overflow-hidden">
+              <CardContent className="flex items-center gap-4 p-5 sm:p-6">
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-gold/10 text-gold">
                   <Icon className="h-5 w-5" />
                 </span>
-                <div>
+                <div className="min-w-0">
                   <p className="text-xs text-muted">{label}</p>
                   <p
-                    className={`text-2xl font-extrabold ${highlight ? "text-gradient-gold" : ""}`}
+                    className={`text-xl sm:text-2xl font-extrabold truncate ${highlight ? "text-gradient-gold" : ""}`}
                     dir="ltr"
                   >
                     {value}$
@@ -158,13 +158,13 @@ export default async function WalletPage() {
           ))}
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-3">
+        <div className="mt-8 grid gap-6 lg:grid-cols-3 min-w-0">
           {/* طرق الشحن */}
-          <div className="space-y-6 lg:col-span-1">
-            <Card className="border-gold/30">
+          <div className="space-y-6 lg:col-span-1 min-w-0">
+            <Card className="border-gold/30 overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-base">{t.binanceTitle}</CardTitle>
-                <CardDescription>{t.binanceDesc}</CardDescription>
+                <CardDescription className="break-words">{t.binanceDesc}</CardDescription>
               </CardHeader>
               <CardContent>
                {binanceEnabled && <BinanceDeposit minDeposit={minDeposit} />}
@@ -172,10 +172,10 @@ export default async function WalletPage() {
             </Card>
 
             {cryptoConfig.address && (
-              <Card className="border-gold/30">
+              <Card className="border-gold/30 overflow-hidden">
                 <CardHeader>
                   <CardTitle className="text-base">{t.cryptoTitle}</CardTitle>
-                  <CardDescription>{t.cryptoDesc}</CardDescription>
+                  <CardDescription className="break-words">{t.cryptoDesc}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <CryptoDeposit
@@ -190,14 +190,14 @@ export default async function WalletPage() {
               </Card>
             )}
 
-            <div className="mb-6">
+            <div className="mb-6 min-w-0">
               <BankAccountsDisplay accounts={activeBankAccounts} />
             </div>
 
-            <Card>
+            <Card className="overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-base">{t.manualTitle}</CardTitle>
-                <CardDescription>{t.manualDesc}</CardDescription>
+                <CardDescription className="break-words">{t.manualDesc}</CardDescription>
               </CardHeader>
               <CardContent>
                 <DepositForm
@@ -213,7 +213,7 @@ export default async function WalletPage() {
           </div>
 
           {/* طلبات الشحن السابقة */}
-          <Card className="lg:col-span-2">
+          <Card className="lg:col-span-2 min-w-0 overflow-hidden">
             <CardHeader>
               <CardTitle className="text-base">{t.depositsTitle}</CardTitle>
             </CardHeader>
