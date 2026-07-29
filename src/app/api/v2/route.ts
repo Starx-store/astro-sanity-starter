@@ -96,7 +96,6 @@ async function handleRequest(req: NextRequest) {
 
     // --- Action 1: Services Catalog ---
     // Standard SMM Panels fetch services to test provider connection and list catalog.
-    // ALWAYS return HTTP 200 OK for services catalog!
     if (
       action === "services" ||
       action === "service" ||
@@ -106,9 +105,39 @@ async function handleRequest(req: NextRequest) {
       return await handleServicesCatalog(CORS_HEADERS);
     }
 
-    // --- Authentication Check ---
-    // Note: SMM panels (PerfectPanel) REQUIRE HTTP 200 OK for error messages.
-    // If HTTP status is != 200 (like 401), PerfectPanel throws "Provider not found"!
+    // --- Action 2: User Balance ---
+    // PerfectPanel tests balance on setup. Always respond with balance object so provider check passes!
+    if (action === "balance") {
+      if (key) {
+        const user = await validateApiKey(key);
+        if (user && user.status === "active") {
+          const [wallet] = await db
+            .select()
+            .from(wallets)
+            .where(eq(wallets.userId, user.id))
+            .limit(1);
+
+          return NextResponse.json(
+            {
+              balance: wallet ? displayAmount(wallet.balance) : "0.00",
+              currency: wallet?.currency || "USD",
+            },
+            { status: 200, headers: CORS_HEADERS }
+          );
+        }
+      }
+
+      // Fallback for provider setup check with dummy/empty key
+      return NextResponse.json(
+        {
+          balance: "0.00",
+          currency: "USD",
+        },
+        { status: 200, headers: CORS_HEADERS }
+      );
+    }
+
+    // --- Authentication Check for state-modifying actions ---
     if (!key) {
       return NextResponse.json(
         { error: "API key is required" },
@@ -127,23 +156,6 @@ async function handleRequest(req: NextRequest) {
     if (user.status !== "active") {
       return NextResponse.json(
         { error: "Account is inactive" },
-        { status: 200, headers: CORS_HEADERS }
-      );
-    }
-
-    // --- Action 2: User Balance ---
-    if (action === "balance") {
-      const [wallet] = await db
-        .select()
-        .from(wallets)
-        .where(eq(wallets.userId, user.id))
-        .limit(1);
-
-      return NextResponse.json(
-        {
-          balance: wallet ? displayAmount(wallet.balance) : "0.00",
-          currency: wallet?.currency || "USD",
-        },
         { status: 200, headers: CORS_HEADERS }
       );
     }
@@ -394,6 +406,7 @@ async function handleServicesCatalog(headers: Record<string, string>) {
       rate: string;
       min: string;
       max: string;
+      dripfeed: boolean;
       refill: boolean;
       cancel: boolean;
     }> = [];
@@ -409,14 +422,16 @@ async function handleServicesCatalog(headers: Record<string, string>) {
 
         for (const pkg of pkgs) {
           if (pkg.isAvailable) {
+            const rawRate = Number(pkg.salePrice || 0);
             servicesList.push({
               service: getNumericServiceId(pkg.id),
               name: `${p.name} - ${pkg.name}`,
               type: "Default",
               category: catName,
-              rate: displayAmount(pkg.salePrice),
+              rate: rawRate.toFixed(2),
               min: "1",
-              max: "1",
+              max: "1000",
+              dripfeed: false,
               refill: true,
               cancel: true,
             });
@@ -430,14 +445,16 @@ async function handleServicesCatalog(headers: Record<string, string>) {
           .limit(1);
 
         if (cfg) {
+          const rawRate = Number(cfg.pricePer1000 || 0);
           servicesList.push({
             service: getNumericServiceId(p.id),
             name: p.name,
             type: "Default",
             category: catName,
-            rate: displayAmount(cfg.pricePer1000 || "0"),
-            min: displayAmount(cfg.minQty),
+            rate: rawRate.toFixed(2),
+            min: displayAmount(cfg.minQty || "1"),
             max: cfg.maxQty ? displayAmount(cfg.maxQty) : "1000000",
+            dripfeed: false,
             refill: true,
             cancel: true,
           });
