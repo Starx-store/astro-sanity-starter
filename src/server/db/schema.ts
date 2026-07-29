@@ -494,6 +494,8 @@ export const productPackages = pgTable(
     packageType: text("package_type").notNull().default("fixed"), // fixed | quantity
     pricePer1000: money("price_per_1000"),
     traderPricePer1000: money("trader_price_per_1000"),
+    costPrice: money("cost_price").notNull().default("0"),
+    costPricePer1000: money("cost_price_per_1000"),
     minQty: numeric("min_qty", { precision: 18, scale: 4 }).default("1"),
     maxQty: numeric("max_qty", { precision: 18, scale: 4 }),
     quantity: numeric("quantity", { precision: 18, scale: 4 }).default("1"),

@@ -705,6 +705,29 @@ export function ProductForm({
                     )}
                   </>
                 )}
+                {(() => {
+                  const sale = Number(p.salePrice) || 0;
+                  const cost = Number(p.costPrice) || 0;
+                  const profit = sale - cost;
+                  const marginPct = cost > 0 ? ((profit / cost) * 100).toFixed(1) : sale > 0 ? "100" : "0";
+                  const isLoss = sale > 0 && cost > sale;
+
+                  return (
+                    <div className={`sm:col-span-12 flex flex-wrap items-center justify-between gap-2 rounded-xl p-3 text-xs font-semibold ${
+                      isLoss ? "bg-rose-500/10 text-rose-400 border border-rose-500/30" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    }`}>
+                      <span>📊 هامش ربح هذا البكج:</span>
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span>التكلفة: <strong dir="ltr">{cost.toFixed(2)}$</strong></span>
+                        <span>البيع: <strong dir="ltr">{sale.toFixed(2)}$</strong></span>
+                        <span>الربح الصافي: <strong dir="ltr">{profit >= 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2)}$</strong></span>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] ${isLoss ? "bg-rose-500 text-white animate-pulse" : "bg-emerald-500/20 text-emerald-300"}`}>
+                          {isLoss ? `⚠️ خسارة ${marginPct}%` : `📈 +${marginPct}%`}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="flex items-end gap-2 sm:col-span-2">
                   <label className="flex h-11 items-center gap-2 text-sm">
                     <input
@@ -989,6 +1012,29 @@ export function ProductForm({
                   }
                 />
               </Field>
+              {(() => {
+                const sale = Number(f.qtyConfig.pricePer1000 || f.qtyConfig.pricePerUnit) || 0;
+                const cost = Number(f.qtyConfig.costPrice) || 0;
+                const profit = sale - cost;
+                const marginPct = cost > 0 ? ((profit / cost) * 100).toFixed(1) : sale > 0 ? "100" : "0";
+                const isLoss = sale > 0 && cost > sale;
+
+                return (
+                  <div className={`sm:col-span-2 flex flex-wrap items-center justify-between gap-2 rounded-xl p-3 text-xs font-semibold ${
+                    isLoss ? "bg-rose-500/10 text-rose-400 border border-rose-500/30" : "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                  }`}>
+                    <span>📊 هامش الربح لمنتج الكمية:</span>
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span>التكلفة: <strong dir="ltr">{cost.toFixed(2)}$</strong></span>
+                      <span>البيع: <strong dir="ltr">{sale.toFixed(2)}$</strong></span>
+                      <span>الربح الصافي: <strong dir="ltr">{profit >= 0 ? `+${profit.toFixed(2)}` : profit.toFixed(2)}$</strong></span>
+                      <span className={`px-2.5 py-0.5 rounded-full text-[11px] ${isLoss ? "bg-rose-500 text-white animate-pulse" : "bg-emerald-500/20 text-emerald-300"}`}>
+                        {isLoss ? `⚠️ خسارة ${marginPct}%` : `📈 +${marginPct}%`}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
 

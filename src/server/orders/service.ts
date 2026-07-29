@@ -647,6 +647,18 @@ export async function createOrder(params: {
       customerEmail: buyer?.email ?? "غير معروف",
       status: order.status,
     });
+    if (finalTotal < priced.cost) {
+      const loss = priced.cost - finalTotal;
+      const { notifyAdminLossOrder } = await import("@/server/email");
+      await notifyAdminLossOrder({
+        orderNo,
+        productName: priced.product.name,
+        totalPrice: displayAmount(finalTotal),
+        costPrice: displayAmount(priced.cost),
+        lossAmount: displayAmount(loss),
+        customerEmail: buyer?.email ?? "غير معروف",
+      });
+    }
     if (isStock && buyer?.email) {
       const delivery = (order.deliveryData ?? null) as { text?: string } | null;
       if (delivery?.text) {
