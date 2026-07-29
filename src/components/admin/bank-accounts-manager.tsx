@@ -119,7 +119,10 @@ export function BankAccountsManager({
       if (editingId) {
         const res = await apiPut<BankAccount>(`/api/admin/bank-accounts/${editingId}`, formData);
         if (!res.ok) {
-          setError(res.error || "تعذّر حفظ التعديلات.");
+          const detailMsg = res.fieldErrors
+            ? Object.values(res.fieldErrors).join(" — ")
+            : res.error || "تعذّر حفظ التعديلات.";
+          setError(detailMsg);
           return;
         }
         setAccounts((prev) =>
@@ -128,7 +131,10 @@ export function BankAccountsManager({
       } else {
         const res = await apiPost<BankAccount>("/api/admin/bank-accounts", formData);
         if (!res.ok) {
-          setError(res.error || "تعذّر إضافة الحساب البنكي.");
+          const detailMsg = res.fieldErrors
+            ? Object.values(res.fieldErrors).join(" — ")
+            : res.error || "تعذّر إضافة الحساب البنكي.";
+          setError(detailMsg);
           return;
         }
         setAccounts((prev) => [res.data, ...prev]);
