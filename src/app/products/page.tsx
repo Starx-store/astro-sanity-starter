@@ -79,14 +79,16 @@ export default async function ProductsPage(
     )
     .orderBy(asc(products.sortOrder), asc(products.name));
 
-  // "يبدأ من" — أدنى سعر بكج + أسعار الكمية
+  // "يبدأ من" — أدنى سعر بكج + أسعار الكمية (مع مراعاة سعر التاجر للتجار)
   const ids = items.map((i) => i.p.id);
   const startPrices = new Map<string, string>();
   if (ids.length > 0) {
     const minPkgs = await db
       .select({
         productId: productPackages.productId,
-        min: sql<string>`min(${productPackages.salePrice})`,
+        min: isTrader
+          ? sql<string>`min(COALESCE(${productPackages.traderPrice}, ${productPackages.salePrice}))`
+          : sql<string>`min(${productPackages.salePrice})`,
       })
       .from(productPackages)
       .where(
@@ -103,10 +105,13 @@ export default async function ProductsPage(
       .from(productQuantityConfig)
       .where(inArray(productQuantityConfig.productId, ids));
     for (const c of cfgs) {
-      const unit = c.pricePerUnit
-        ? parseAmount(c.pricePerUnit)
-        : c.pricePer1000
-          ? per1000ToUnit(parseAmount(c.pricePer1000))
+      const unitPrice = isTrader ? (c.traderPricePerUnit || c.pricePerUnit) : c.pricePerUnit;
+      const per1000Price = isTrader ? (c.traderPricePer1000 || c.pricePer1000) : c.pricePer1000;
+
+      const unit = unitPrice
+        ? parseAmount(unitPrice)
+        : per1000Price
+          ? per1000ToUnit(parseAmount(per1000Price))
           : null;
       if (unit !== null && !startPrices.has(c.productId)) {
         startPrices.set(c.productId, displayAmount(unit));
@@ -123,95 +128,118 @@ export default async function ProductsPage(
           <p className="text-sm text-muted">{t.subtitle}</p>
         </div>
 
-        {/* تصفية التصنيفات */}
+        {/* التصنيفات */}
         <div className="mb-8 flex flex-wrap gap-2">
-          <Link
-            href="/products"
-            className={cn(
-              "rounded-full border px-4 py-1.5 text-sm transition-colors",
-              !activeCat
-                ? "border-gold/50 bg-gold/15 text-gold"
-                : "border-border text-muted hover:text-foreground",
-            )}
-          >
-            {t.all}
+          <Link href="/products">
+            <Badge
+              variant={!activeCat ? "default" : "outline"}
+              className="cursor-pointer px-3 py-1.5 text-xs"
+            >
+              {t.all}
+            </Badge>
           </Link>
           {cats.map((c) => (
-            <Link
-              key={c.id}
-              href={`/products?cat=${encodeURIComponent(c.slug)}`}
-              className={cn(
-                "rounded-full border px-4 py-1.5 text-sm transition-colors",
-                activeCat?.id === c.id
-                  ? "border-gold/50 bg-gold/15 text-gold"
-                  : "border-border text-muted hover:text-foreground",
-              )}
-            >
-              {c.name}
+            <Link key={c.id} href={`/products?cat=${encodeURIComponent(c.slug)}`}>
+              <Badge
+                variant={activeCat?.id === c.id ? "default" : "outline"}
+                className="cursor-pointer px-3 py-1.5 text-xs"
+              >
+                {c.name}
+              </Badge>
             </Link>
           ))}
         </div>
 
         {items.length === 0 ? (
-          <p className="rounded-lg border border-dashed border-border p-12 text-center text-sm text-muted">
-            {t.empty}
-          </p>
+          <div className="rounded-xl border border-dashed border-border p-12 text-center text-muted">
+            <Package className="mx-auto mb-3 h-10 w-10 opacity-50" />
+            <p>{t.empty}</p>
+          </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {items.map(({ p, categoryName }) => {
-              const st = productStatusLabel(p.status, locale);
               const from = startPrices.get(p.id);
+              const st = productStatusLabel(p.status, locale);
               return (
-                <Link key={p.id} href={`/products/${encodeURIComponent(p.slug)}`}>
-                  <Card className="flex h-full flex-col overflow-hidden transition-colors hover:border-gold/40">
+                <Link
+                  key={p.id}
+                  href={`/products/${encodeURIComponent(p.slug)}`}
+                  className="group"
+                >
+                  <Card className="glass-card-pro card-interactive-pro flex h-full flex-col overflow-hidden rounded-2xl border-white/5">
                     {p.imageId ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      (<img
-                        src={`/api/products/image/${p.imageId}`}
-                        alt={p.name}
-                        loading="lazy"
-                        className="aspect-video w-full border-b border-border object-cover"
-                      />)
-                    ) : null}
-                    <div className="flex flex-1 flex-col p-6">
-                    {(!p.imageId || p.status !== "active") && (
-                      <div className="mb-4 flex items-start justify-between gap-3">
-                        {!p.imageId ? (
-                          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-gold/10 text-gold">
-                            <Package className="h-5 w-5" />
+                      <div className="relative aspect-video w-full overflow-hidden border-b border-border/50">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={`/api/products/image/${p.imageId}`}
+                          alt={p.name}
+                          loading="lazy"
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
+                        <div className="absolute top-2 right-2 flex gap-1">
+                          <span className="rounded-full bg-black/60 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-medium text-white border border-white/10">
+                            {categoryName}
                           </span>
-                        ) : (
-                          <span />
-                        )}
-                        {p.status !== "active" && (
-                          <Badge tone={st.tone}>{st.label}</Badge>
-                        )}
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative h-24 w-full bg-gradient-to-br from-gold/10 via-surface-2 to-surface p-4 flex items-center justify-between border-b border-border/50">
+                        <span className="grid h-10 w-10 place-items-center rounded-xl bg-gold/15 text-gold shadow-inner">
+                          <Package className="h-5 w-5" />
+                        </span>
+                        <span className="rounded-full bg-black/40 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-medium text-gold border border-gold/20">
+                          {categoryName}
+                        </span>
                       </div>
                     )}
-                    <h3 className="font-bold">{p.name}</h3>
-                    <p className="mt-1 text-xs text-muted">{categoryName}</p>
-                    {p.description && (
-                      <p className="mt-2 line-clamp-2 text-sm text-muted">
-                        {p.description}
-                      </p>
-                    )}
-                    <div className="mt-auto pt-4">
-                      {from ? (
-                        <p className="text-sm text-muted">
-                          {t.from}{" "}
-                          <span className="text-lg font-extrabold text-gradient-gold" dir="ltr">
-                            {displayAmount(from)}$
-                          </span>
-                          {currency && (
-                            <span className="mt-0.5 block text-xs" dir="ltr">
-                              ≈ {convertDisplay(displayAmount(from), currency)}
-                            </span>
-                          )}
+
+                    <div className="flex flex-1 flex-col p-5">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <h2 className="font-bold text-base group-hover:text-gold transition-colors line-clamp-1">
+                          {p.name}
+                        </h2>
+                        {p.status !== "active" && (
+                          <Badge
+                            variant="secondary"
+                            className={cn(
+                              "text-[10px]",
+                              p.status === "out_of_stock" && "bg-destructive/10 text-destructive",
+                            )}
+                          >
+                            {st}
+                          </Badge>
+                        )}
+                      </div>
+
+                      {p.description && (
+                        <p className="mb-4 line-clamp-2 text-xs text-muted leading-relaxed">
+                          {p.description}
                         </p>
-                      ) : (
-                        <p className="text-sm text-muted">{t.details}</p>
                       )}
-                    </div>
+
+                      <div className="mt-auto pt-3 border-t border-border/40 flex items-center justify-between">
+                        {from ? (
+                          <div>
+                            <span className="block text-[10px] uppercase font-bold text-muted">
+                              {t.from}
+                            </span>
+                            <span className="text-base font-black text-gradient-gold" dir="ltr">
+                              ${displayAmount(from)}
+                            </span>
+                            {currency && (
+                              <span className="block text-[10px] text-muted font-semibold" dir="ltr">
+                                ≈ {convertDisplay(displayAmount(from), currency)}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted">{t.details}</span>
+                        )}
+
+                        <span className="text-xs font-bold text-gold group-hover:underline">
+                          {t.details} →
+                        </span>
+                      </div>
                     </div>
                   </Card>
                 </Link>

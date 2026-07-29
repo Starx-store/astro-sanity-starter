@@ -134,7 +134,7 @@ const T = {
 const featureIcons = [Wallet, ShieldCheck, Zap, Headphones];
 const categoryIcons = [Gamepad2, Share2, CreditCard, Package];
 
-/** أحدث المنتجات المتاحة + أدنى سعر لكل منتج */
+/** أحدث المنتجات المتاحة + أدنى سعر لكل منتج (مع مراعاة سعر التاجر للحسابات التجارية) */
 async function getShowcase(isTrader: boolean) {
   try {
     const whereConditions = [
@@ -160,7 +160,9 @@ async function getShowcase(isTrader: boolean) {
       const minPkgs = await db
         .select({
           productId: productPackages.productId,
-          min: sql<string>`min(${productPackages.salePrice})`,
+          min: isTrader
+            ? sql<string>`min(COALESCE(${productPackages.traderPrice}, ${productPackages.salePrice}))`
+            : sql<string>`min(${productPackages.salePrice})`,
         })
         .from(productPackages)
         .where(
@@ -177,10 +179,13 @@ async function getShowcase(isTrader: boolean) {
         .from(productQuantityConfig)
         .where(inArray(productQuantityConfig.productId, ids));
       for (const c of cfgs) {
-        const unit = c.pricePerUnit
-          ? parseAmount(c.pricePerUnit)
-          : c.pricePer1000
-            ? per1000ToUnit(parseAmount(c.pricePer1000))
+        const unitPrice = isTrader ? (c.traderPricePerUnit || c.pricePerUnit) : c.pricePerUnit;
+        const per1000Price = isTrader ? (c.traderPricePer1000 || c.pricePer1000) : c.pricePer1000;
+
+        const unit = unitPrice
+          ? parseAmount(unitPrice)
+          : per1000Price
+            ? per1000ToUnit(parseAmount(per1000Price))
             : null;
         if (unit !== null && !startPrices.has(c.productId)) {
           startPrices.set(c.productId, displayAmount(unit));
