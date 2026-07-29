@@ -1,20 +1,17 @@
 /** @type {import('next').NextConfig} */
 const isProd = process.env.NODE_ENV === "production";
 
-// سياسة أمان المحتوى — تسمح بما يحتاجه Next.js وصور Binance QR.
 const csp = [
   "default-src 'self'",
-  // Next.js يتطلب inline/eval في التطوير؛ في الإنتاج نسمح بـ inline للأنماط فقط.
   isProd
     ? "script-src 'self' 'unsafe-inline'"
     : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: https:",
   "font-src 'self' data:",
-  "connect-src 'self'",
+  "connect-src *",
   "frame-ancestors 'none'",
   "base-uri 'self'",
-  "form-action 'self'",
 ].join("; ");
 
 const securityHeaders = [
@@ -36,14 +33,25 @@ const securityHeaders = [
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  // يفعّل src/instrumentation.ts (حارس unhandledRejection في serverless).
-  
-  // فحص الأنواع والـ lint يجري في بيئة التطوير؛ لا نُعطّل النشر بسببها.
-  // (أنواع TypeScript تُمحى وقت التشغيل، والتحقق الفعلي يتم عبر Zod وقيود قاعدة البيانات.)
+  skipTrailingSlashRedirect: true,
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
+  async rewrites() {
+    return [
+      { source: "/api/v2/", destination: "/api/v2" },
+      { source: "/api/v1/", destination: "/api/v2" },
+      { source: "/api/v1", destination: "/api/v2" },
+      { source: "/api/services/", destination: "/api/v2" },
+      { source: "/api/services", destination: "/api/v2" },
+    ];
+  },
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    return [
+      {
+        source: "/((?!api).*)",
+        headers: securityHeaders,
+      },
+    ];
   },
 };
 
