@@ -342,8 +342,51 @@ export default async function HomePage() {
                   </Link>
                 );
               })}
-            </div>
           )}
+        </section>
+
+        {/* Banners: VIP Trader & AI Assistant */}
+        <section className="mx-auto max-w-6xl px-4 py-6">
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* VIP Trader Banner */}
+            <div className="relative overflow-hidden rounded-2xl border border-gold/30 bg-gradient-to-br from-amber-950/40 via-surface to-bg p-6 shadow-xl backdrop-blur">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <Badge tone="gold" className="mb-3">🏆 باقة التجار والـ VIP</Badge>
+                  <h3 className="text-xl font-bold text-foreground">هل أنت صاحب متجر أو موزع؟</h3>
+                  <p className="mt-2 text-sm text-muted leading-relaxed">
+                    احصل على أسعار الجملة الخاصة، وأولوية التنفيذ التلقائي، ومنتجات حصرية مخصصة للتجار فقط لتكبير أرباحك وتنمية تجارتك.
+                  </p>
+                  <div className="mt-5 flex items-center gap-3">
+                    <Link href="/support">
+                      <Button size="sm" variant="outline" className="border-gold/40 text-gold hover:bg-gold/10">
+                        طلب انضمام للتجار ←
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* AI Assistant Banner */}
+            <div className="relative overflow-hidden rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/30 via-surface to-bg p-6 shadow-xl backdrop-blur">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <Badge tone="success" className="mb-3">🤖 المساعد الآلي 24/7</Badge>
+                  <h3 className="text-xl font-bold text-foreground">استعلام واستجابة فورية لطلباتك</h3>
+                  <p className="mt-2 text-sm text-muted leading-relaxed">
+                    جرب مساعدنا الآلي الذكي أسفل الشاشة لتتبع حالة طلبك برقم الطلب في أي وقت، والإجابة التلقائية على طرق الدفع والسرعة.
+                  </p>
+                  <div className="mt-5 flex items-center gap-3">
+                    <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+                      اضغط على الأيقونة العائمة أسفل اليسار للتحدث الآن
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* Features */}

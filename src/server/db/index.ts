@@ -72,6 +72,8 @@ client`ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS price_per_1000 nume
 client`ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS trader_price_per_1000 numeric(18,4)`.catch(() => {});
 client`ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS min_qty numeric(18,4) DEFAULT '1'`.catch(() => {});
 client`ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS max_qty numeric(18,4)`.catch(() => {});
+client`ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS cost_price numeric(18,4) DEFAULT '0'`.catch(() => {});
+client`ALTER TABLE product_packages ADD COLUMN IF NOT EXISTS cost_price_per_1000 numeric(18,4)`.catch(() => {});
 client`CREATE TABLE IF NOT EXISTS bank_accounts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   bank_name TEXT NOT NULL,

@@ -222,3 +222,32 @@ export async function notifyAdminNewOrder(info: {
     ),
   );
 }
+
+/** إشعار صاحب المتجر عند تنفيذ طلب هامش ربحه سلبي (خسارة). */
+export async function notifyAdminLossOrder(info: {
+  orderNo: string;
+  productName: string;
+  totalPrice: string;
+  costPrice: string;
+  lossAmount: string;
+  customerEmail: string;
+}): Promise<void> {
+  const to = process.env.ADMIN_NOTIFY_EMAIL?.trim() || process.env.SMTP_FROM?.trim();
+  if (!to) return;
+  await send(
+    to,
+    `⚠️ تنبيه: طلب بخسارة رقم ${info.orderNo}`,
+    wrap(
+      "⚠️ تنبيه طلب بخسارة مالية",
+      `<p style="color:#ef4444;font-weight:bold">تم تنفيذ طلب كانت تكلفته أعلى من سعر بيعه!</p>
+       <p>رقم الطلب: <b>${escapeHtml(info.orderNo)}</b></p>
+       <p>المنتج: <b>${escapeHtml(info.productName)}</b></p>
+       <p>سعر البيع للزبون: <b dir="ltr">${escapeHtml(info.totalPrice)}$</b></p>
+       <p>التكلفة عليك: <b dir="ltr">${escapeHtml(info.costPrice)}$</b></p>
+       <p style="color:#ef4444;font-size:16px">مبلغ الخسارة: <b dir="ltr">-${escapeHtml(info.lossAmount)}$</b></p>
+       <p>العميل: <span dir="ltr">${escapeHtml(info.customerEmail)}</span></p>
+       <p style="margin-top:12px;font-size:12px;color:#aaa">يرجى مراجعة تسعير المنتج أو المزود فوراً في لوحة التحكم.</p>`,
+    ),
+  );
+}
+

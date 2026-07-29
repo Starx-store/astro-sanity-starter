@@ -8,6 +8,7 @@ import { getSessionUser } from "@/server/auth/session";
 import { isStaffOrAdmin } from "@/server/auth/rbac";
 import { MaintenanceScreen } from "@/components/layout/maintenance-screen";
 import { WhatsAppButton } from "@/components/layout/whatsapp-button";
+import { AiAssistant } from "@/components/layout/ai-assistant";
 import { ThemeScript } from "@/components/layout/theme-toggle";
 import { AnnouncementBar } from "@/components/layout/announcement-bar";
 
@@ -95,7 +96,12 @@ export default async function RootLayout({
               badge={announcement.badge} 
             />
             {children}
-            {!isAdminPath && <WhatsAppButton />}
+            {!isAdminPath && (
+              <>
+                <WhatsAppButton />
+                <AiAssistant />
+              </>
+            )}
           </>
         )}
       </body>
