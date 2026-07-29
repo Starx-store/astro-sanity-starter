@@ -53,7 +53,7 @@ export default async function ProductsPage(
   let locale: "ar" | "en" = "ar";
 
   try {
-    const searchParams = await props.searchParams;
+    const rawParams = props?.searchParams ? await props.searchParams : {};
     locale = await getLocale();
 
     cats = await db
@@ -62,8 +62,8 @@ export default async function ProductsPage(
       .where(eq(categories.isVisible, true))
       .orderBy(asc(categories.sortOrder), asc(categories.name));
 
-    activeCat = searchParams.cat
-      ? cats.find((c) => c.slug === searchParams.cat)
+    activeCat = rawParams.cat
+      ? cats.find((c) => c.slug === rawParams.cat)
       : undefined;
 
     currency = await getSelectedCurrency();
@@ -182,7 +182,7 @@ export default async function ProductsPage(
               return (
                 <Link
                   key={p.id}
-                  href={`/products/${encodeURIComponent(p.slug)}`}
+                  href={`/products/${encodeURIComponent(p.slug || p.id)}`}
                   className="group"
                 >
                   <Card className="glass-card-pro card-interactive-pro flex h-full flex-col overflow-hidden rounded-2xl border-white/5">
@@ -225,7 +225,7 @@ export default async function ProductsPage(
                               p.status === "out_of_stock" && "bg-destructive/10 text-destructive",
                             )}
                           >
-                            {st}
+                            {st.label}
                           </Badge>
                         )}
                       </div>
