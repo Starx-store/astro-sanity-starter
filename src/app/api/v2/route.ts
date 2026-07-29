@@ -59,30 +59,22 @@ async function handleRequest(req: NextRequest) {
       body[key] = val;
     });
 
-    // 2) Parse parameters from POST body if present
+    // 2) Safely parse POST body without double-consuming request stream
     if (req.method === "POST") {
-      const contentType = req.headers.get("content-type") || "";
-      if (contentType.includes("application/json")) {
-        try {
-          const json = await req.json();
-          body = { ...body, ...json };
-        } catch {}
-      } else {
-        try {
-          const formData = await req.formData();
-          formData.forEach((val, k) => {
-            body[k] = val;
-          });
-        } catch {
+      try {
+        const rawText = await req.text();
+        if (rawText) {
           try {
-            const text = await req.text();
-            const params = new URLSearchParams(text);
+            const json = JSON.parse(rawText);
+            body = { ...body, ...json };
+          } catch {
+            const params = new URLSearchParams(rawText);
             params.forEach((val, k) => {
               body[k] = val;
             });
-          } catch {}
+          }
         }
-      }
+      } catch {}
     }
 
     // Header authorization bearer fallback
