@@ -222,11 +222,8 @@ async function priceOrder(input: {
     if (customPkg) {
       // سعر خاص بالعميل لهذا البكج — يتقدّم على كل شيء.
       price = parseAmount(customPkg.price);
-    } else if (isTrader && pkg.traderPrice) {
-      // سعر التاجر يحل محل سعر البيع تمامًا — لا يتراكب مع خصم الباقات.
-      price = parseAmount(pkg.traderPrice);
     } else {
-      const basePrice = parseAmount(pkg.salePrice);
+      const basePrice = isTrader && pkg.traderPrice ? parseAmount(pkg.traderPrice) : parseAmount(pkg.salePrice);
       price =
         discountPct > 0
           ? applyPercentDiscount(basePrice, discountPct)
