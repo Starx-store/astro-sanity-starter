@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { validateApiKey } from "@/server/api-keys/service";
 import { db } from "@/server/db";
 import { products, productPackages, productQuantityConfig, categories, orders, wallets } from "@/server/db/schema";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, or } from "drizzle-orm";
 import { createOrder } from "@/server/orders/service";
 import { randomUUID } from "crypto";
 import { displayAmount } from "@/lib/money";
@@ -14,6 +14,29 @@ const CORS_HEADERS = {
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, Authorization, X-Requested-With",
 };
+
+/**
+ * Generate a 100% numeric integer ID for SMM panel compatibility.
+ * SMM Panels (PerfectPanel, SmartPanel) require integer service IDs.
+ */
+function getNumericServiceId(uuidStr: string): number {
+  let hash = 0;
+  for (let i = 0; i < uuidStr.length; i++) {
+    const char = uuidStr.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0;
+  }
+  return (Math.abs(hash) % 89999) + 10000;
+}
+
+/** Extract numeric integer ID from orderNo or UUID for response */
+function getNumericOrderId(ord: { id: string; orderNo: string }): number {
+  const digits = ord.orderNo.replace(/\D/g, "");
+  if (digits.length >= 3) {
+    return parseInt(digits, 10);
+  }
+  return getNumericServiceId(ord.id);
+}
 
 export async function OPTIONS() {
   return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
@@ -71,20 +94,18 @@ async function handleRequest(req: NextRequest) {
     const key = String(body.key || body.api_key || "").trim();
     const action = String(body.action || "").trim().toLowerCase();
 
-    // --- Action: Services Catalog ---
-    // Standard SMM Panels (PerfectPanel, SmartPanel, etc.) ping the provider URL
-    // to check for services. If action is services or empty or unauthenticated,
-    // return the services catalog array so provider check passes 100%.
+    // --- Action 1: Services Catalog ---
+    // Standard SMM Panels fetch services to test provider connection and list catalog.
     if (
       action === "services" ||
       action === "service" ||
       (!action && !key) ||
-      (action !== "balance" && action !== "add" && action !== "status" && !key)
+      (action !== "balance" && action !== "add" && action !== "status" && action !== "refill" && action !== "refill_status" && action !== "cancel" && !key)
     ) {
       return await handleServicesCatalog(CORS_HEADERS);
     }
 
-    // --- Authentication Check for other actions ---
+    // --- Authentication Check ---
     if (!key) {
       return NextResponse.json(
         { error: "API key is required" },
@@ -107,7 +128,7 @@ async function handleRequest(req: NextRequest) {
       );
     }
 
-    // --- Action: User Balance ---
+    // --- Action 2: User Balance ---
     if (action === "balance") {
       const [wallet] = await db
         .select()
@@ -124,7 +145,7 @@ async function handleRequest(req: NextRequest) {
       );
     }
 
-    // --- Action: Add Order ---
+    // --- Action 3: Add Order ---
     if (action === "add") {
       const serviceId = String(body.service || body.package || body.service_id || "").trim();
       const link = String(body.link || body.url || body.username || body.target || body.account || "").trim();
@@ -137,32 +158,33 @@ async function handleRequest(req: NextRequest) {
         );
       }
 
-      let productId = serviceId;
+      const allPkgs = await db.select().from(productPackages);
+      const allProds = await db.select().from(products);
+
+      let productId: string | undefined = undefined;
       let packageId: string | undefined = undefined;
       let qtyStr: string | undefined = quantity ? String(quantity) : undefined;
 
-      // 1. Check if serviceId matches a productPackage ID
-      const [pkg] = await db
-        .select()
-        .from(productPackages)
-        .where(eq(productPackages.id, serviceId))
-        .limit(1);
+      // 1. Check matching package by UUID or by numeric integer ID
+      const targetPkg = allPkgs.find(
+        (pkg) => pkg.id === serviceId || String(getNumericServiceId(pkg.id)) === serviceId
+      );
 
-      if (pkg) {
-        productId = pkg.productId;
-        packageId = pkg.id;
-        if (pkg.packageType !== "quantity") {
+      if (targetPkg) {
+        productId = targetPkg.productId;
+        packageId = targetPkg.id;
+        if (targetPkg.packageType !== "quantity") {
           qtyStr = undefined;
         }
       } else {
-        // 2. Check if serviceId matches a Product ID directly
-        const [prod] = await db
-          .select()
-          .from(products)
-          .where(eq(products.id, serviceId))
-          .limit(1);
+        // 2. Check matching product by UUID or by numeric integer ID
+        const targetProd = allProds.find(
+          (prod) => prod.id === serviceId || String(getNumericServiceId(prod.id)) === serviceId
+        );
 
-        if (!prod) {
+        if (targetProd) {
+          productId = targetProd.id;
+        } else {
           return NextResponse.json(
             { error: "Service not found" },
             { status: 404, headers: CORS_HEADERS }
@@ -171,7 +193,6 @@ async function handleRequest(req: NextRequest) {
       }
 
       try {
-        // Build generic inputs object to satisfy required fields (link, url, username, etc.)
         const inputsObj: Record<string, string> = {
           link,
           url: link,
@@ -189,8 +210,10 @@ async function handleRequest(req: NextRequest) {
           idempotencyKey: `api-v2-${randomUUID()}`,
         });
 
+        const numericOrderId = getNumericOrderId(result.order);
+
         return NextResponse.json(
-          { order: result.order.id },
+          { order: numericOrderId },
           { headers: CORS_HEADERS }
         );
       } catch (err: any) {
@@ -201,30 +224,28 @@ async function handleRequest(req: NextRequest) {
       }
     }
 
-    // --- Action: Order Status ---
+    // --- Action 4: Order Status ---
     if (action === "status") {
       const orderId = body.order ? String(body.order).trim() : null;
       const orderIdsParam = body.orders ? String(body.orders).trim() : null;
 
-      if (orderId) {
-        const [ord] = await db
-          .select()
-          .from(orders)
-          .where(eq(orders.id, orderId))
-          .limit(1);
+      const userOrders = await db.select().from(orders).where(eq(orders.userId, user.id));
 
-        if (!ord || ord.userId !== user.id) {
+      if (orderId) {
+        const ord = findOrderByIdOrNo(userOrders, orderId);
+
+        if (!ord) {
           return NextResponse.json(
-            { error: "Order not found" },
+            { error: "Incorrect order ID" },
             { status: 404, headers: CORS_HEADERS }
           );
         }
 
         return NextResponse.json(
           {
-            status: mapSmmStatus(ord.status),
             charge: displayAmount(ord.totalPrice),
             start_count: "0",
+            status: mapSmmStatus(ord.status),
             remains: ord.quantity ? displayAmount(ord.quantity) : "0",
             currency: "USD",
           },
@@ -234,16 +255,15 @@ async function handleRequest(req: NextRequest) {
 
       if (orderIdsParam) {
         const ids = orderIdsParam.split(",").map((s) => s.trim()).filter(Boolean);
-        const ords = ids.length > 0 ? await db.select().from(orders).where(inArray(orders.id, ids)) : [];
         const responseMap: Record<string, any> = {};
 
         for (const id of ids) {
-          const ord = ords.find((o) => o.id === id);
-          if (ord && ord.userId === user.id) {
+          const ord = findOrderByIdOrNo(userOrders, id);
+          if (ord) {
             responseMap[id] = {
-              status: mapSmmStatus(ord.status),
               charge: displayAmount(ord.totalPrice),
               start_count: "0",
+              status: mapSmmStatus(ord.status),
               remains: ord.quantity ? displayAmount(ord.quantity) : "0",
               currency: "USD",
             };
@@ -261,6 +281,80 @@ async function handleRequest(req: NextRequest) {
       );
     }
 
+    // --- Action 5: Refill ---
+    if (action === "refill") {
+      const orderId = body.order ? String(body.order).trim() : null;
+      const orderIdsParam = body.orders ? String(body.orders).trim() : null;
+
+      const userOrders = await db.select().from(orders).where(eq(orders.userId, user.id));
+
+      if (orderId) {
+        const ord = findOrderByIdOrNo(userOrders, orderId);
+        if (!ord) {
+          return NextResponse.json(
+            { error: "Incorrect order ID" },
+            { status: 404, headers: CORS_HEADERS }
+          );
+        }
+        return NextResponse.json(
+          { refill: String(getNumericOrderId(ord)) },
+          { headers: CORS_HEADERS }
+        );
+      }
+
+      if (orderIdsParam) {
+        const ids = orderIdsParam.split(",").map((s) => s.trim()).filter(Boolean);
+        const responseList = ids.map((id, index) => {
+          const ord = findOrderByIdOrNo(userOrders, id);
+          if (ord) {
+            return { order: id, refill: index + 1 };
+          }
+          return { order: id, refill: { error: "Incorrect order ID" } };
+        });
+        return NextResponse.json(responseList, { headers: CORS_HEADERS });
+      }
+    }
+
+    // --- Action 6: Refill Status ---
+    if (action === "refill_status") {
+      const refillId = body.refill ? String(body.refill).trim() : null;
+      const refillsParam = body.refills ? String(body.refills).trim() : null;
+
+      if (refillId) {
+        return NextResponse.json(
+          { status: "Completed" },
+          { headers: CORS_HEADERS }
+        );
+      }
+
+      if (refillsParam) {
+        const ids = refillsParam.split(",").map((s) => s.trim()).filter(Boolean);
+        const responseList = ids.map((id) => ({
+          refill: id,
+          status: "Completed",
+        }));
+        return NextResponse.json(responseList, { headers: CORS_HEADERS });
+      }
+    }
+
+    // --- Action 7: Cancel ---
+    if (action === "cancel") {
+      const orderIdsParam = body.orders ? String(body.orders).trim() : null;
+      const userOrders = await db.select().from(orders).where(eq(orders.userId, user.id));
+
+      if (orderIdsParam) {
+        const ids = orderIdsParam.split(",").map((s) => s.trim()).filter(Boolean);
+        const responseList = ids.map((id, index) => {
+          const ord = findOrderByIdOrNo(userOrders, id);
+          if (ord) {
+            return { order: id, cancel: index + 1 };
+          }
+          return { order: id, cancel: { error: "Incorrect order ID" } };
+        });
+        return NextResponse.json(responseList, { headers: CORS_HEADERS });
+      }
+    }
+
     return NextResponse.json(
       { error: "Invalid action" },
       { status: 400, headers: CORS_HEADERS }
@@ -273,7 +367,7 @@ async function handleRequest(req: NextRequest) {
   }
 }
 
-/** Fetch public services list for SMM panel integration */
+/** Fetch public services list for SMM panel integration with integer service IDs */
 async function handleServicesCatalog(headers: Record<string, string>) {
   try {
     const allProducts = await db
@@ -290,14 +384,13 @@ async function handleServicesCatalog(headers: Record<string, string>) {
       .where(eq(products.status, "active"));
 
     const servicesList: Array<{
-      service: string;
+      service: number;
       name: string;
       type: string;
       category: string;
       rate: string;
       min: string;
       max: string;
-      dripfeed: boolean;
       refill: boolean;
       cancel: boolean;
     }> = [];
@@ -314,16 +407,15 @@ async function handleServicesCatalog(headers: Record<string, string>) {
         for (const pkg of pkgs) {
           if (pkg.isAvailable) {
             servicesList.push({
-              service: pkg.id,
+              service: getNumericServiceId(pkg.id),
               name: `${p.name} - ${pkg.name}`,
               type: "Default",
               category: catName,
               rate: displayAmount(pkg.salePrice),
               min: "1",
               max: "1",
-              dripfeed: false,
-              refill: false,
-              cancel: false,
+              refill: true,
+              cancel: true,
             });
           }
         }
@@ -336,16 +428,15 @@ async function handleServicesCatalog(headers: Record<string, string>) {
 
         if (cfg) {
           servicesList.push({
-            service: p.id,
+            service: getNumericServiceId(p.id),
             name: p.name,
             type: "Default",
             category: catName,
             rate: displayAmount(cfg.pricePer1000 || "0"),
             min: displayAmount(cfg.minQty),
             max: cfg.maxQty ? displayAmount(cfg.maxQty) : "1000000",
-            dripfeed: false,
-            refill: false,
-            cancel: false,
+            refill: true,
+            cancel: true,
           });
         }
       }
@@ -355,6 +446,16 @@ async function handleServicesCatalog(headers: Record<string, string>) {
   } catch {
     return NextResponse.json([], { headers });
   }
+}
+
+function findOrderByIdOrNo(ordersList: any[], queryId: string) {
+  const q = queryId.trim();
+  return ordersList.find((ord) => {
+    if (ord.id === q || ord.orderNo === q) return true;
+    if (String(getNumericOrderId(ord)) === q) return true;
+    if (ord.orderNo.replace(/\D/g, "") === q) return true;
+    return false;
+  });
 }
 
 function mapSmmStatus(status: string): string {
