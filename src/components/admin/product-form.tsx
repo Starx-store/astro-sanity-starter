@@ -488,13 +488,13 @@ export function ProductForm({
                           dir="ltr"
                           inputMode="decimal"
                           placeholder="مثال: 2.50"
-                          value={p.pricePer1000 ?? p.salePrice}
+                          value={p.pricePer1000 ?? p.salePrice ?? ""}
                           onChange={(e) =>
                             set(
                               "packages",
                               f.packages.map((x, j) =>
                                 j === i
-                                  ? { ...x, pricePer1000: e.target.value, salePrice: e.target.value }
+                                  ? { ...x, pricePer1000: e.target.value, salePrice: e.target.value || "0" }
                                   : x,
                               ),
                             )
@@ -507,14 +507,34 @@ export function ProductForm({
                         <Input
                           dir="ltr"
                           inputMode="decimal"
-                          placeholder="مثال: 1.80"
-                          value={p.traderPricePer1000 ?? p.traderPrice}
+                          placeholder="مثال: 1.80 (اختياري)"
+                          value={p.traderPricePer1000 ?? p.traderPrice ?? ""}
                           onChange={(e) =>
                             set(
                               "packages",
                               f.packages.map((x, j) =>
                                 j === i
                                   ? { ...x, traderPricePer1000: e.target.value, traderPrice: e.target.value }
+                                  : x,
+                              ),
+                            )
+                          }
+                        />
+                      </Field>
+                    </div>
+                    <div className="sm:col-span-3">
+                      <Field label="سعر الـ 1000 للمزوّد $">
+                        <Input
+                          dir="ltr"
+                          inputMode="decimal"
+                          placeholder="مثال: 1.40"
+                          value={p.ratePer1000 ?? p.costPrice ?? ""}
+                          onChange={(e) =>
+                            set(
+                              "packages",
+                              f.packages.map((x, j) =>
+                                j === i
+                                  ? { ...x, ratePer1000: e.target.value, costPrice: e.target.value || "0" }
                                   : x,
                               ),
                             )
@@ -558,35 +578,15 @@ export function ProductForm({
                         />
                       </Field>
                     </div>
-                    <div className="sm:col-span-3">
-                      <Field label="سعر الـ 1000 للمزوّد $">
-                        <Input
-                          dir="ltr"
-                          inputMode="decimal"
-                          placeholder="مثال: 1.40"
-                          value={p.ratePer1000 ?? p.costPrice}
-                          onChange={(e) =>
-                            set(
-                              "packages",
-                              f.packages.map((x, j) =>
-                                j === i
-                                  ? { ...x, ratePer1000: e.target.value, costPrice: e.target.value }
-                                  : x,
-                              ),
-                            )
-                          }
-                        />
-                      </Field>
-                    </div>
                   </>
                 ) : (
                   <>
-                    <div className="sm:col-span-2">
-                      <Field label="سعر البيع $">
+                    <div className="sm:col-span-3">
+                      <Field label="سعر البيع للزبون $">
                         <Input
                           dir="ltr"
                           inputMode="decimal"
-                          value={p.salePrice}
+                          value={p.salePrice ?? ""}
                           onChange={(e) =>
                             set(
                               "packages",
@@ -598,13 +598,13 @@ export function ProductForm({
                         />
                       </Field>
                     </div>
-                    <div className="sm:col-span-2">
+                    <div className="sm:col-span-3">
                       <Field label="سعر التاجر $">
                         <Input
                           dir="ltr"
                           inputMode="decimal"
                           placeholder="اختياري"
-                          value={p.traderPrice}
+                          value={p.traderPrice ?? ""}
                           onChange={(e) =>
                             set(
                               "packages",
@@ -616,7 +616,7 @@ export function ProductForm({
                         />
                       </Field>
                     </div>
-                    <div className="sm:col-span-2">
+                    <div className="sm:col-span-3">
                       <Field label="الكمية للمزوّد">
                         <Input
                           dir="ltr"
@@ -627,7 +627,7 @@ export function ProductForm({
                             const newQty = e.target.value;
                             const rNum = Number(p.ratePer1000) || 0;
                             const qNum = Number(newQty) || 0;
-                            const calcCost = rNum > 0 && qNum > 0 ? ((rNum * qNum) / 1000).toFixed(4) : p.costPrice;
+                            const calcCost = rNum > 0 && qNum > 0 ? ((rNum * qNum) / 1000).toFixed(4) : (p.costPrice || "0");
                             set(
                               "packages",
                               f.packages.map((x, j) =>
@@ -638,18 +638,18 @@ export function ProductForm({
                         />
                       </Field>
                     </div>
-                    <div className="sm:col-span-2">
+                    <div className="sm:col-span-3">
                       <Field label="سعر الـ 1000 للمزوّد $">
                         <Input
                           dir="ltr"
                           inputMode="decimal"
-                          placeholder="مثال: 1.40"
+                          placeholder="مثال: 0.0014"
                           value={p.ratePer1000 ?? ""}
                           onChange={(e) => {
                             const newRate = e.target.value;
                             const rNum = Number(newRate) || 0;
                             const qNum = Number(p.quantity || "1000") || 0;
-                            const calcCost = rNum > 0 && qNum > 0 ? ((rNum * qNum) / 1000).toFixed(4) : p.costPrice;
+                            const calcCost = rNum > 0 && qNum > 0 ? ((rNum * qNum) / 1000).toFixed(4) : (p.costPrice || "0");
                             set(
                               "packages",
                               f.packages.map((x, j) =>
@@ -660,12 +660,13 @@ export function ProductForm({
                         />
                       </Field>
                     </div>
-                    <div className="sm:col-span-1">
-                      <Field label="التكلفة $">
+                    <div className="sm:col-span-3">
+                      <Field label="التكلفة الإجمالية عليك $">
                         <Input
                           dir="ltr"
                           inputMode="decimal"
-                          value={p.costPrice}
+                          placeholder="مثال: 1.40"
+                          value={p.costPrice ?? "0"}
                           onChange={(e) =>
                             set(
                               "packages",
@@ -679,23 +680,6 @@ export function ProductForm({
                     </div>
                   </>
                 )}
-                <div className="sm:col-span-2">
-                  <Field label="التكلفة الإجمالية $">
-                    <Input
-                      dir="ltr"
-                      inputMode="decimal"
-                      value={p.costPrice}
-                      onChange={(e) =>
-                        set(
-                          "packages",
-                          f.packages.map((x, j) =>
-                            j === i ? { ...x, costPrice: e.target.value } : x,
-                          ),
-                        )
-                      }
-                    />
-                  </Field>
-                </div>
                 <div className="flex items-end gap-2 sm:col-span-2">
                   <label className="flex h-11 items-center gap-2 text-sm">
                     <input
