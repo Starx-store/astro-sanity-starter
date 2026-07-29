@@ -2,24 +2,23 @@
 const isProd = process.env.NODE_ENV === "production";
 
 const csp = [
-  "default-src 'self'",
-  isProd
-    ? "script-src 'self' 'unsafe-inline'"
-    : "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-  "style-src 'self' 'unsafe-inline'",
-  "img-src 'self' data: https:",
-  "font-src 'self' data:",
+  "default-src 'self' https: data:",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval' https:",
+  "style-src 'self' 'unsafe-inline' https:",
+  "img-src 'self' data: https: blob:",
+  "font-src 'self' data: https:",
   "connect-src *",
-  "frame-ancestors 'none'",
+  "frame-ancestors *",
   "base-uri 'self'",
 ].join("; ");
 
 const securityHeaders = [
   { key: "Content-Security-Policy", value: csp },
   { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  { key: "Access-Control-Allow-Origin", value: "*" },
+  { key: "Access-Control-Allow-Methods", value: "GET, POST, OPTIONS, PUT, DELETE, PATCH" },
+  { key: "Access-Control-Allow-Headers", value: "Content-Type, Authorization, X-Requested-With" },
   ...(isProd
     ? [
         {
@@ -48,7 +47,7 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: "/((?!api).*)",
+        source: "/:path*",
         headers: securityHeaders,
       },
     ];

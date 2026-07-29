@@ -84,7 +84,12 @@ async function handleRequest(req: NextRequest) {
     }
 
     const key = String(body.key || body.api_key || "").trim();
-    const action = String(body.action || "").trim().toLowerCase();
+    let action = String(body.action || "").trim().toLowerCase();
+
+    // Default action for /api/v2/services route
+    if (!action && req.nextUrl.pathname.endsWith("/services")) {
+      action = "services";
+    }
 
     // --- PerfectPanel Provider Auto-Detect Fallback ---
     // When PerfectPanel tests a URL directly without action, it expects {"error":"Incorrect request"}
