@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { asc, eq } from "drizzle-orm";
-import { Plus } from "lucide-react";
+import { Plus, Archive, PackageCheck } from "lucide-react";
 import { db } from "@/server/db";
 import { products, categories } from "@/server/db/schema";
 import { productStatusLabel } from "@/lib/labels";
@@ -10,17 +10,27 @@ import { Button } from "@/components/ui/button";
 import { ProductDeleteButton } from "@/components/admin/product-delete-button";
 import { requirePagePermission } from "@/server/auth/current-user";
 import { PERMISSIONS } from "@/server/auth/rbac";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminProductsPage() {
+export default async function AdminProductsPage(props: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
   await requirePagePermission(PERMISSIONS.productsEdit);
+  const searchParams = await props.searchParams;
+  const isArchivedTab = searchParams.tab === "archived";
 
-  const rows = await db
+  const allRows = await db
     .select({ p: products, categoryName: categories.name })
     .from(products)
     .innerJoin(categories, eq(products.categoryId, categories.id))
     .orderBy(asc(products.sortOrder), asc(products.name));
+
+  const activeRows = allRows.filter((r) => r.p.status !== "hidden");
+  const archivedRows = allRows.filter((r) => r.p.status === "hidden");
+
+  const displayRows = isArchivedTab ? archivedRows : activeRows;
 
   return (
     <div className="space-y-6">
@@ -37,11 +47,41 @@ export default async function AdminProductsPage() {
         </Link>
       </div>
 
+      {/* تبويبات الفلترة بين النشطة والمؤرشفة */}
+      <div className="flex items-center gap-2 border-b border-border pb-3">
+        <Link
+          href="/admin/products"
+          className={cn(
+            "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors",
+            !isArchivedTab
+              ? "bg-gold text-background"
+              : "bg-surface-2/60 text-muted hover:text-foreground",
+          )}
+        >
+          <PackageCheck className="h-4 w-4" />
+          المنتجات النشطة ({activeRows.length})
+        </Link>
+        <Link
+          href="/admin/products?tab=archived"
+          className={cn(
+            "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors",
+            isArchivedTab
+              ? "bg-gold text-background"
+              : "bg-surface-2/60 text-muted hover:text-foreground",
+          )}
+        >
+          <Archive className="h-4 w-4" />
+          المحذوفات والمؤرشفة ({archivedRows.length})
+        </Link>
+      </div>
+
       <Card>
         <CardContent className="p-0">
-          {rows.length === 0 ? (
+          {displayRows.length === 0 ? (
             <p className="p-10 text-center text-sm text-muted">
-              لا توجد منتجات بعد — أنشئ أول منتج.
+              {isArchivedTab
+                ? "لا توجد منتجات محذوفة أو مؤرشفة حاليًا."
+                : "لا توجد منتجات نشطة حاليًا — أنشئ أول منتج."}
             </p>
           ) : (
             <div className="overflow-x-auto">
@@ -58,7 +98,7 @@ export default async function AdminProductsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map(({ p, categoryName }) => {
+                  {displayRows.map(({ p, categoryName }) => {
                     const st = productStatusLabel(p.status);
                     return (
                       <tr key={p.id} className="border-b border-border/60 last:border-0">
@@ -93,11 +133,13 @@ export default async function AdminProductsPage() {
                             >
                               تعديل
                             </Link>
-                            <ProductDeleteButton
-                              productId={p.id}
-                              productName={p.name}
-                              compact
-                            />
+                            {!isArchivedTab && (
+                              <ProductDeleteButton
+                                productId={p.id}
+                                productName={p.name}
+                                compact
+                              />
+                            )}
                           </div>
                         </td>
                       </tr>
