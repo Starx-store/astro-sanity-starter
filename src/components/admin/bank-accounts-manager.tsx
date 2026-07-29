@@ -117,17 +117,25 @@ export function BankAccountsManager({
 
     try {
       if (editingId) {
-        const res = await apiPut(`/api/admin/bank-accounts/${editingId}`, formData);
+        const res = await apiPut<BankAccount>(`/api/admin/bank-accounts/${editingId}`, formData);
+        if (!res.ok) {
+          setError(res.error || "تعذّر حفظ التعديلات.");
+          return;
+        }
         setAccounts((prev) =>
-          prev.map((a) => (a.id === editingId ? { ...a, ...res } : a))
+          prev.map((a) => (a.id === editingId ? res.data : a))
         );
       } else {
-        const res = await apiPost("/api/admin/bank-accounts", formData);
-        setAccounts((prev) => [res, ...prev]);
+        const res = await apiPost<BankAccount>("/api/admin/bank-accounts", formData);
+        if (!res.ok) {
+          setError(res.error || "تعذّر إضافة الحساب البنكي.");
+          return;
+        }
+        setAccounts((prev) => [res.data, ...prev]);
       }
       setIsFormOpen(false);
     } catch (err: any) {
-      setError(err.message || "Something went wrong");
+      setError(err.message || "حدث خطأ غير متوقع");
     } finally {
       setIsLoading(false);
     }
@@ -136,7 +144,11 @@ export function BankAccountsManager({
   const handleDelete = async (id: string) => {
     if (!confirm(t.confirmDelete)) return;
     try {
-      await apiDelete(`/api/admin/bank-accounts/${id}`);
+      const res = await apiDelete(`/api/admin/bank-accounts/${id}`);
+      if (!res.ok) {
+        alert(res.error || "تعذّر حذف الحساب البنكي.");
+        return;
+      }
       setAccounts((prev) => prev.filter((a) => a.id !== id));
     } catch (err: any) {
       alert(err.message);
@@ -145,11 +157,15 @@ export function BankAccountsManager({
 
   const toggleActive = async (account: BankAccount) => {
     try {
-      const res = await apiPut(`/api/admin/bank-accounts/${account.id}`, {
+      const res = await apiPut<BankAccount>(`/api/admin/bank-accounts/${account.id}`, {
         isActive: !account.isActive,
       });
+      if (!res.ok) {
+        alert(res.error || "تعذّر تغيير حالة الحساب البنكي.");
+        return;
+      }
       setAccounts((prev) =>
-        prev.map((a) => (a.id === account.id ? { ...a, ...res } : a))
+        prev.map((a) => (a.id === account.id ? res.data : a))
       );
     } catch (err: any) {
       alert(err.message);
