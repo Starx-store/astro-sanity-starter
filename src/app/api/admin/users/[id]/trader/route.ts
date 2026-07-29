@@ -11,7 +11,7 @@ export const runtime = "nodejs";
 
 const schema = z.object({
   isTrader: z.boolean().optional(),
-  membershipTier: z.enum(["standard", "silver", "gold", "platinum"]).optional(),
+  membershipTier: z.enum(["standard", "silver", "gold", "trader", "platinum"]).optional(),
 });
 
 /** تفعيل/إلغاء باقة العضوية وتغيير رتبة المستخدم (عادي، فضي، ذهبي، ماسي). */

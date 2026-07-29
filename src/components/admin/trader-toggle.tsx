@@ -8,13 +8,13 @@ import { Alert } from "@/components/ui/alert";
 import { apiPost } from "@/lib/api-client";
 
 const TIERS = [
-  { id: "standard", label: "⚪ عضوية عادية (Standard)", desc: "سعر المستهلك الأساسي (بدون خصم خاص)" },
-  { id: "silver", label: "🥈 الباقة الفضية (Silver)", desc: "خصم إضافي 3% تلقائي على جميع الطلبات" },
-  { id: "gold", label: "🥇 الباقة الذهبية (Gold Trader)", desc: "تفعيل أسعار باقة التاجر الخاصة للمنتجات + 5% خصم" },
-  { id: "platinum", label: "💎 الباقة الماسية VIP (Platinum)", desc: "أسعار التاجر الخاصة + خصم 10% VIP للموزعين" },
+  { id: "standard", label: "⚪ عادي (Standard)", desc: "مستخدم عادي — الشراء بالأسعار الافتراضية" },
+  { id: "silver", label: "🥈 فضي (Silver)", desc: "مستوى فضي — خصم تلقائي 3% على الطلبات" },
+  { id: "gold", label: "🥇 ذهبي (Gold)", desc: "مستوى ذهبي — خصم تلقائي 5% على الطلبات" },
+  { id: "trader", label: "🏪 تاجر (Trader)", desc: "حساب تاجر — تفعيل أسعار التاجر المحددة للمنتجات" },
 ] as const;
 
-/** تفعيل/تغيير باقة التاجر والعضوية لعميل */
+/** تفعيل/تغيير باقة التاجر والعضوية لعميل (عادي، فضي، ذهبي، تاجر) */
 export function TraderToggle({
   userId,
   isTrader,
@@ -28,19 +28,21 @@ export function TraderToggle({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentTier, setCurrentTier] = useState<string>(
-    membershipTier || (isTrader ? "gold" : "standard")
+    membershipTier === "trader" || (isTrader && membershipTier === "standard")
+      ? "trader"
+      : membershipTier || "standard"
   );
 
   async function toggleTraderDirect() {
     const nextIsTrader = !isTrader;
-    const nextTier = nextIsTrader ? "gold" : "standard";
+    const nextTier = nextIsTrader ? "trader" : "standard";
     await updateTier(nextTier, nextIsTrader);
   }
 
   async function updateTier(newTier: string, forceIsTrader?: boolean) {
     setLoading(true);
     setError(null);
-    const traderFlag = typeof forceIsTrader === "boolean" ? forceIsTrader : newTier !== "standard";
+    const traderFlag = typeof forceIsTrader === "boolean" ? forceIsTrader : newTier === "trader";
     const res = await apiPost<{ isTrader: boolean; membershipTier: string }>(
       `/api/admin/users/${userId}/trader`,
       { membershipTier: newTier, isTrader: traderFlag }
@@ -60,21 +62,21 @@ export function TraderToggle({
       
       {/* 1) Direct Trader Toggle Button */}
       <Button
-        variant={isTrader ? "outline" : "subtle"}
+        variant={isTrader || currentTier === "trader" ? "outline" : "subtle"}
         size="md"
         className="w-full justify-center font-bold"
         loading={loading}
         onClick={toggleTraderDirect}
       >
         <Store className="h-4 w-4" />
-        {isTrader ? "إلغاء حساب التاجر (إعادة لعادي)" : "⚡ تفعيل حساب تاجر فوراً"}
+        {isTrader || currentTier === "trader" ? "إلغاء حساب التاجر (إعادة لعادي)" : "⚡ تفعيل حساب تاجر فوراً"}
       </Button>
 
       <hr className="border-border/60" />
 
-      {/* 2) Detailed Tier Selection */}
+      {/* 2) Tier Selection */}
       <div className="space-y-2">
-        <label className="text-xs font-bold text-foreground">تحديد رتبة وباقة العضوية بالتفصيل:</label>
+        <label className="text-xs font-bold text-foreground">تحديد رتبة العضوية للمستخدم:</label>
         <div className="grid gap-2">
           {TIERS.map((t) => {
             const active = currentTier === t.id;

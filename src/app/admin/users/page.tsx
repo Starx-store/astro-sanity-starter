@@ -95,12 +95,12 @@ export default async function AdminUsersPage(
                           <Badge tone={u.role === "customer" ? "neutral" : "gold"}>
                             {ROLE_LABELS[u.role] ?? u.role}
                           </Badge>
-                          {u.membershipTier === "platinum" ? (
-                            <Badge tone="gold">💎 ماسية VIP</Badge>
-                          ) : u.membershipTier === "gold" || u.isTrader ? (
-                            <Badge tone="gold">🥇 ذهبية</Badge>
+                          {u.membershipTier === "trader" || u.isTrader ? (
+                            <Badge tone="gold">🏪 تاجر</Badge>
+                          ) : u.membershipTier === "gold" ? (
+                            <Badge tone="gold">🥇 ذهبي</Badge>
                           ) : u.membershipTier === "silver" ? (
-                            <Badge tone="neutral">🥈 فضية</Badge>
+                            <Badge tone="neutral">🥈 فضي</Badge>
                           ) : null}
                         </div>
                       </td>

@@ -109,6 +109,7 @@ export async function getUserOrderDiscountPercent(
     .where(eq(users.id, userId))
     .limit(1);
 
+  if (u?.membershipTier === "trader") return 0;
   if (u?.membershipTier === "platinum") return 10;
   if (u?.membershipTier === "gold") return 5;
   if (u?.membershipTier === "silver") return 3;
