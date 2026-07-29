@@ -9,7 +9,7 @@ export function AiAssistant() {
   const [messages, setMessages] = useState<Array<{ role: "assistant" | "user"; text: string }>>([
     {
       role: "assistant",
-      text: "مرحباً بك! أنا **المساعد الآلي لـ Evo Store** 🤖\nكيف يمكنني مساعدتك اليوم؟ أرسل رقم طلبك للاستعلام أو اختر سؤالاً شافئاً:",
+      text: "مرحباً بك! أنا **المساعد الآلي لـ Evo Store** 🤖\nكيف يمكنني مساعدتك اليوم؟ أرسل رقم طلبك للاستعلام أو اختر سؤالاً شائعاً:",
     },
   ]);
   const [loading, setLoading] = useState(false);
@@ -40,10 +40,10 @@ export function AiAssistant() {
 
   return (
     <>
-      {/* Floating Button */}
+      {/* Floating Button - Symmetrical with WhatsApp */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 left-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-gold to-amber-500 text-bg shadow-xl transition-all duration-300 hover:scale-110 active:scale-95"
+        className="fixed bottom-6 left-4 sm:left-6 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-gold to-amber-500 text-bg shadow-xl transition-all duration-300 hover:scale-110 active:scale-95"
         aria-label="المساعد الآلي"
       >
         {isOpen ? <X className="h-6 w-6" /> : <Bot className="h-7 w-7 animate-pulse" />}
@@ -51,7 +51,7 @@ export function AiAssistant() {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-24 left-6 z-50 flex h-[500px] w-[360px] max-w-[calc(100vw-3rem)] flex-col overflow-hidden rounded-2xl border border-gold/30 bg-card/95 shadow-2xl backdrop-blur-xl animate-fade-in-up">
+        <div className="fixed bottom-24 left-4 sm:left-6 z-50 flex h-[500px] w-[360px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-2xl border border-gold/30 bg-card/95 shadow-2xl backdrop-blur-xl animate-fade-in-up">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-border bg-gradient-to-r from-gold/20 via-surface to-surface p-4">
             <div className="flex items-center gap-3">
@@ -102,50 +102,39 @@ export function AiAssistant() {
           </div>
 
           {/* Quick Action Chips */}
-          <div className="flex gap-2 overflow-x-auto px-4 py-2 border-t border-border/40 bg-surface/50 text-xs scrollbar-none">
+          <div className="flex gap-2 overflow-x-auto border-t border-border/50 p-2.5 bg-surface/50 text-xs">
             <button
-              onClick={() => sendMessage("💳 طرق الدفع")}
-              className="flex whitespace-nowrap items-center gap-1 rounded-full border border-border bg-card px-3 py-1 text-muted hover:border-gold hover:text-gold"
+              onClick={() => sendMessage("كيف اشحن محفظتي؟")}
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface-2 px-3 py-1 text-muted hover:border-gold hover:text-gold"
             >
-              <CreditCard className="h-3 w-3" /> طرق الدفع
+              <CreditCard className="h-3.5 w-3.5 text-gold" /> طريقة الشحن
             </button>
             <button
-              onClick={() => sendMessage("⚡ كم تستغرق الطلبات؟")}
-              className="flex whitespace-nowrap items-center gap-1 rounded-full border border-border bg-card px-3 py-1 text-muted hover:border-gold hover:text-gold"
+              onClick={() => sendMessage("ما هي طريقة استلام الطلب؟")}
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface-2 px-3 py-1 text-muted hover:border-gold hover:text-gold"
             >
-              <Zap className="h-3 w-3" /> سرعة التنفيذ
-            </button>
-            <button
-              onClick={() => sendMessage("💬 التواصل مع الدعم")}
-              className="flex whitespace-nowrap items-center gap-1 rounded-full border border-border bg-card px-3 py-1 text-muted hover:border-gold hover:text-gold"
-            >
-              <MessageSquare className="h-3 w-3" /> الدعم الفني
+              <Zap className="h-3.5 w-3.5 text-gold" /> سرعة التسليم
             </button>
           </div>
 
-          {/* Input Form */}
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              sendMessage();
-            }}
-            className="flex items-center gap-2 border-t border-border p-3 bg-surface"
-          >
+          {/* Input Box */}
+          <div className="flex items-center gap-2 border-t border-border p-3 bg-surface">
             <input
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="اكتب رقم الطلب أو استفسارك..."
-              className="flex-1 rounded-xl border border-border bg-card px-3.5 py-2 text-sm text-foreground focus:border-gold focus:outline-none"
+              onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+              placeholder="اكتب استفسارك أو رقم طلبك..."
+              className="flex-1 rounded-xl border border-border bg-input px-3.5 py-2 text-xs text-foreground focus:border-gold focus:outline-none"
             />
             <button
-              type="submit"
+              onClick={() => sendMessage()}
               disabled={loading || !input.trim()}
-              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold text-bg transition hover:opacity-90 disabled:opacity-50"
+              className="flex h-9 w-9 items-center justify-center rounded-xl bg-gold text-bg font-bold shadow-md hover:bg-gold-strong disabled:opacity-50"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-4 w-4 rtl:rotate-180" />
             </button>
-          </form>
+          </div>
         </div>
       )}
     </>
