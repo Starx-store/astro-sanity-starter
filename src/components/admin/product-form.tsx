@@ -325,15 +325,14 @@ export function ProductForm({
               <span className="text-sm">للتجار فقط</span>
             </label>
           </Field>
-          <Field label="نوع المنتج" hint={isNew ? undefined : "لا يتغيّر بعد الإنشاء"}>
+          <Field label="نوع المنتج" hint="اختر 'بكجات' للباقات الجاهزة أو 'كمية' للتسعير حسب الكمية">
             <select
               className={selectCls}
               value={f.type}
-              disabled={!isNew}
               onChange={(e) => set("type", e.target.value as ProductFormInitial["type"])}
             >
-              <option value="package">بكجات</option>
-              <option value="quantity">كمية</option>
+              <option value="package">بكجات (باقات مجهزة)</option>
+              <option value="quantity">كمية (حسب العدد/الكمية)</option>
             </select>
           </Field>
           <Field
