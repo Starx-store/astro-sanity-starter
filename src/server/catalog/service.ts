@@ -264,13 +264,20 @@ export async function updateProduct(id: string, input: ProductInput) {
         .from(products)
         .where(eq(products.id, id))
         .for("update");
-      if (!existing) throw new AppError("not_found", "المنتج غير موجود.", 404);
+      // إذا تم تغيير نوع المنتج (مثلاً من كمية إلى بكجات أو العكس)
       if (existing.type !== input.type) {
-        throw new AppError(
-          "type_locked",
-          "لا يمكن تغيير نوع المنتج بعد إنشائه.",
-          409,
-        );
+        if (input.type === "package") {
+          await tx
+            .delete(productQuantityConfig)
+            .where(eq(productQuantityConfig.productId, id));
+          await tx
+            .delete(priceTiers)
+            .where(eq(priceTiers.productId, id));
+        } else if (input.type === "quantity") {
+          await tx
+            .delete(productPackages)
+            .where(eq(productPackages.productId, id));
+        }
       }
       await tx
         .update(products)
