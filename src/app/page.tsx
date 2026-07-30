@@ -74,7 +74,12 @@ const T = {
         desc: "نظام تذاكر متطور ومساعد ذكي للرد على استفساراتك وتتبع طلباتك.",
       },
     ],
-    categories: ["شحن الألعاب", "خدمات التواصل", "بطاقات وأرصدة", "اشتراكات رقمية"],
+    categoriesFallback: [
+      { name: "شحن الألعاب", slug: "game-topups" },
+      { name: "خدمات التواصل", slug: "social-media" },
+      { name: "بطاقات وأرصدة", slug: "gift-cards" },
+      { name: "اشتراكات رقمية", slug: "subscriptions" },
+    ],
     steps: [
       { n: "١", title: "أنشئ حسابك", desc: "تسجيل سريع ومباشر بالبريد أو رقم الجوال." },
       { n: "٢", title: "اشحن محفظتك", desc: "خيارات دفع متنوعة وتشمل Binance Pay والتحويلات." },
@@ -122,7 +127,12 @@ const T = {
         desc: "Smart assistant and support ticketing inside every order.",
       },
     ],
-    categories: ["Game Top-ups", "Social Media", "Gift Cards", "Subscriptions"],
+    categoriesFallback: [
+      { name: "Game Top-ups", slug: "game-topups" },
+      { name: "Social Media", slug: "social-media" },
+      { name: "Gift Cards", slug: "gift-cards" },
+      { name: "Subscriptions", slug: "subscriptions" },
+    ],
     steps: [
       { n: "1", title: "Create Account", desc: "Instant sign-up with email or mobile number." },
       { n: "2", title: "Top Up Wallet", desc: "Multiple deposit methods including Binance Pay." },
@@ -203,6 +213,7 @@ export default async function HomePage() {
   let viewer = null;
   let items: any[] = [];
   let startPrices = new Map<string, string>();
+  let dbCategories: any[] = [];
   let currency = null;
   let locale: "ar" | "en" = "ar";
 
@@ -211,6 +222,13 @@ export default async function HomePage() {
     const showcase = await getShowcase(viewer?.isTrader ?? false);
     items = showcase.items;
     startPrices = showcase.startPrices;
+
+    dbCategories = await db
+      .select()
+      .from(categoriesTable)
+      .where(eq(categoriesTable.isVisible, true))
+      .orderBy(asc(categoriesTable.sortOrder), asc(categoriesTable.name));
+
     currency = await getSelectedCurrency();
     locale = await getLocale();
   } catch (err) {
@@ -218,6 +236,7 @@ export default async function HomePage() {
   }
 
   const t = T[locale];
+  const activeCategories = dbCategories.length > 0 ? dbCategories : t.categoriesFallback;
 
   return (
     <div className="flex min-h-screen flex-col bg-bg text-foreground selection:bg-gold/30">
@@ -286,18 +305,18 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Categories Section - Pro Max Glass Cards */}
+        {/* Categories Section - Pro Max Dynamic Glass Cards */}
         <section className="mx-auto max-w-6xl px-4 py-8">
           <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {t.categories.map((label, i) => {
-              const Icon = categoryIcons[i];
+            {activeCategories.map((cat, i) => {
+              const Icon = categoryIcons[i % categoryIcons.length];
               return (
-                <Link key={label} href="/products">
+                <Link key={cat.slug || cat.name} href={`/products?cat=${encodeURIComponent(cat.slug)}`}>
                   <Card className="glass-card-pro card-interactive-pro group flex h-full flex-col items-center gap-3.5 p-6 text-center rounded-2xl border-white/5">
                     <span className="grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-gold/20 to-gold/5 text-gold shadow-inner transition-transform duration-300 group-hover:scale-110 group-hover:bg-gold group-hover:text-gold-foreground">
                       <Icon className="h-7 w-7" />
                     </span>
-                    <span className="font-bold text-base group-hover:text-gold transition-colors">{label}</span>
+                    <span className="font-bold text-base group-hover:text-gold transition-colors">{cat.name}</span>
                   </Card>
                 </Link>
               );
@@ -343,7 +362,7 @@ export default async function HomePage() {
                 return (
                   <Link
                     key={p.id}
-                    href={`/products/${encodeURIComponent(p.slug)}`}
+                    href={`/products/${encodeURIComponent(p.slug || p.id)}`}
                     className="group"
                   >
                     <Card className="glass-card-pro card-interactive-pro flex h-full flex-col overflow-hidden rounded-2xl border-white/5">
