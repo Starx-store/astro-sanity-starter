@@ -34,7 +34,7 @@ export const dynamic = "force-dynamic";
 
 const T = {
   ar: {
-    heroBadge: "✨ الجيل الجديد للمتاجر الرقمية",
+    heroBadge: "⚡ وجهتك الأولى للخدمات والمنتجات الرقمية",
     heroPre: "منصة متكاملة لـ",
     heroHighlight: "الخدمات والمنتجات الرقمية",
     heroPost: "بأعلى سرعة وأمان",
