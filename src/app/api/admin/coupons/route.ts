@@ -1,7 +1,7 @@
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/server/db";
-import { discountCodes } from "@/server/db/schema";
+import { discountCodes, products as productsTable } from "@/server/db/schema";
 import { requireApiPermission } from "@/server/auth/api";
 import { PERMISSIONS } from "@/server/auth/rbac";
 import { handleError, jsonOk, jsonError, parseBody } from "@/server/http";
@@ -27,6 +27,7 @@ const schema = z.object({
   perUserLimit: z.coerce.number().int().min(0).max(1000).optional(),
   minAmount: nonNegAmountField.optional().or(z.literal("")),
   endsAt: z.string().trim().optional().or(z.literal("")),
+  productId: z.string().uuid().optional().or(z.literal("")),
   isActive: z.boolean().default(true),
 });
 
@@ -35,12 +36,36 @@ const deleteSchema = z.object({ id: z.string().uuid() });
 export async function GET() {
   try {
     await requireApiPermission(PERMISSIONS.settingsEdit);
+
+    // الهجرة الآلية لعمود product_id في حال عدم وجوده في القاعدة
+    try {
+      await db.execute(
+        sql`ALTER TABLE discount_codes ADD COLUMN IF NOT EXISTS product_id UUID REFERENCES products(id) ON DELETE SET NULL;`,
+      );
+    } catch {}
+
     const items = await db
-      .select()
+      .select({
+        c: discountCodes,
+        productName: productsTable.name,
+      })
       .from(discountCodes)
+      .leftJoin(productsTable, eq(discountCodes.productId, productsTable.id))
       .orderBy(desc(discountCodes.createdAt))
       .limit(200);
-    return jsonOk({ items });
+
+    const productsList = await db
+      .select({ id: productsTable.id, name: productsTable.name })
+      .from(productsTable)
+      .orderBy(productsTable.name);
+
+    return jsonOk({
+      items: items.map((i) => ({
+        ...i.c,
+        productName: i.productName ?? null,
+      })),
+      productsList,
+    });
   } catch (err) {
     return handleError(err);
   }
@@ -69,6 +94,7 @@ export async function POST(req: Request) {
             d.perUserLimit && d.perUserLimit > 0 ? d.perUserLimit : null,
           minAmount: d.minAmount?.trim() ? d.minAmount : null,
           endsAt: d.endsAt?.trim() ? new Date(d.endsAt) : null,
+          productId: d.productId?.trim() ? d.productId : null,
           isActive: d.isActive,
         })
         .returning();

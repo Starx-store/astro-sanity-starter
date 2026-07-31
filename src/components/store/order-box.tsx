@@ -124,11 +124,48 @@ export function OrderBox(props: {
   const [formError, setFormError] = useState<string | null>(null);
   const [errCode, setErrCode] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
+  const [checkingCoupon, setCheckingCoupon] = useState(false);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponData, setCouponData] = useState<{
+    code: string;
+    type: "percent" | "fixed";
+    value: string;
+    amountOff: string;
+    newTotal: string;
+  } | null>(null);
 
   const selectedPkg = useMemo(
     () => props.packages.find((p) => p.id === packageId),
     [props.packages, packageId],
   );
+
+  async function checkCoupon() {
+    if (!couponCode.trim()) {
+      setCouponData(null);
+      setCouponError(null);
+      return;
+    }
+    setCheckingCoupon(true);
+    setCouponError(null);
+    setCouponData(null);
+    const res = await apiPost<{
+      code: string;
+      type: "percent" | "fixed";
+      value: string;
+      amountOff: string;
+      newTotal: string;
+    }>("/api/orders/preview-coupon", {
+      code: couponCode.trim(),
+      productId: props.productId,
+      total: preview !== null ? String(preview) : "1.0",
+    });
+    setCheckingCoupon(false);
+    if (res.ok) {
+      setCouponData(res.data);
+    } else {
+      setCouponError(res.error);
+    }
+  }
 
   /** معاينة السعر (عرض فقط — الحساب النهائي من الخادم دائمًا). */
   const preview = useMemo(() => {
@@ -333,28 +370,76 @@ export function OrderBox(props: {
 
       {/* كوبون الخصم */}
       {props.isLoggedIn && props.orderable && (
-        <Field label={t.coupon} error={errors.couponCode}>
-          <Input
-            dir="ltr"
-            placeholder="CODE"
-            value={couponCode}
-            onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-          />
-        </Field>
+        <div className="space-y-2">
+          <Field label={t.coupon} error={errors.couponCode || (couponError ?? undefined)}>
+            <div className="flex gap-2">
+              <Input
+                dir="ltr"
+                placeholder="CODE"
+                value={couponCode}
+                onChange={(e) => {
+                  setCouponCode(e.target.value.toUpperCase());
+                  if (couponData) setCouponData(null);
+                  if (couponError) setCouponError(null);
+                }}
+              />
+              <Button
+                type="button"
+                variant="subtle"
+                loading={checkingCoupon}
+                disabled={!couponCode.trim()}
+                onClick={checkCoupon}
+                className="shrink-0"
+              >
+                فحص الكوبون
+              </Button>
+            </div>
+          </Field>
+
+          {couponData && (
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-xs space-y-1">
+              <div className="flex items-center justify-between text-emerald-400 font-bold">
+                <span>🏷️ كوبون خصم مفعّل ({couponData.type === "percent" ? `خصم ${couponData.value}%` : `خصم $${couponData.value}`})</span>
+                <span dir="ltr">-{couponData.amountOff}$</span>
+              </div>
+              {preview !== null && (
+                <div className="pt-2 border-t border-emerald-500/20 flex items-center justify-between text-muted">
+                  <span>السعر بعد الخصم:</span>
+                  <span className="text-sm font-black text-emerald-300" dir="ltr">
+                    ${fmt(Math.max(0, preview - Number(couponData.amountOff)))}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       )}
 
       {/* السعر */}
       <div className="rounded-lg border border-border bg-surface-2/40 px-4 py-3">
         <div className="flex items-center justify-between">
           <span className="text-sm text-muted">{t.estTotal}</span>
-          <span className="text-xl font-extrabold text-gradient-gold" dir="ltr">
-            {preview !== null ? `${fmt(preview)}$` : "—"}
-          </span>
+          <div className="text-right">
+            {couponData && preview !== null ? (
+              <div>
+                <span className="block text-xs text-muted line-through" dir="ltr">
+                  ${fmt(preview)}
+                </span>
+                <span className="text-xl font-extrabold text-emerald-400" dir="ltr">
+                  ${fmt(Math.max(0, preview - Number(couponData.amountOff)))}
+                </span>
+              </div>
+            ) : (
+              <span className="text-xl font-extrabold text-gradient-gold" dir="ltr">
+                {preview !== null ? `${fmt(preview)}$` : "—"}
+              </span>
+            )}
+          </div>
         </div>
         {props.currency && preview !== null && (
           <p className="mt-1 text-left text-xs text-muted" dir="ltr">
             ≈{" "}
-            {(preview * props.currency.rate).toLocaleString("en-US", {
+            {((couponData ? Math.max(0, preview - Number(couponData.amountOff)) : preview) * props.currency.rate).toLocaleString("en-US", {
               maximumFractionDigits: preview * props.currency.rate >= 100 ? 0 : 2,
             })}{" "}
             {props.currency.label}

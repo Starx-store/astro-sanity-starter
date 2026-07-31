@@ -19,6 +19,8 @@ import { parseAmount, applyPercentDiscount, displayAmount } from "@/lib/money";
 export interface CouponPreview {
   codeId: string;
   code: string;
+  type: "percent" | "fixed";
+  value: string;
   amountOff: bigint;
   newTotal: bigint;
 }
@@ -28,6 +30,7 @@ export async function previewCoupon(params: {
   code: string;
   userId: string;
   total: bigint;
+  productId?: string;
 }): Promise<CouponPreview> {
   const code = params.code.trim().toUpperCase();
   if (!code) throw new AppError("coupon_required", "أدخل رمز الكوبون.", 422);
@@ -44,6 +47,15 @@ export async function previewCoupon(params: {
     });
 
   if (!row || !row.isActive) throw invalid();
+
+  // فحص تخصيص الكوبون لمنتج معين
+  if (row.productId && params.productId && row.productId !== params.productId) {
+    throw new AppError(
+      "coupon_product_mismatch",
+      "هذا الكوبون مخصص لمنتج آخر ولا ينطبق على هذا المنتج.",
+      422,
+    );
+  }
 
   const now = new Date();
   if (row.startsAt && row.startsAt > now) {
@@ -105,7 +117,14 @@ export async function previewCoupon(params: {
     );
   }
 
-  return { codeId: row.id, code: row.code, amountOff, newTotal };
+  return {
+    codeId: row.id,
+    code: row.code,
+    type: row.type,
+    value: String(row.value),
+    amountOff,
+    newTotal,
+  };
 }
 
 /**

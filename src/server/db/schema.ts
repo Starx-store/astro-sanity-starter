@@ -893,6 +893,10 @@ export const discountCodes = pgTable(
     maxUses: integer("max_uses"),
     usedCount: integer("used_count").notNull().default(0),
     minAmount: money("min_amount"),
+    // تخصيص لمنتج معين (null = شامل لجميع المنتجات)
+    productId: uuid("product_id").references(() => products.id, {
+      onDelete: "set null",
+    }),
     // حد الاستخدام لكل عميل (null = بلا حد).
     perUserLimit: integer("per_user_limit"),
     startsAt: timestamp("starts_at", { withTimezone: true }),
