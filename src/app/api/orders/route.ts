@@ -18,6 +18,9 @@ export async function POST(req: Request) {
 
     // إذا كان زائرًا ولم يسجل الدخول، يفحص بريد الشراء السريع
     if (!user) {
+      // حماية من إنشاء حسابات وهمية بالجملة: تحديد بالـ IP قبل إنشاء الحساب
+      await enforceRateLimit({ key: "guest-checkout", limit: 5, windowMs: 10 * 60_000 });
+
       const guestEmail = parsed.data.guestEmail?.trim();
       if (!guestEmail || !guestEmail.includes("@")) {
         return jsonError("يرجى إدخال البريد الإلكتروني أو تسجيل الدخول لإتمام الطلب.", 401);

@@ -400,7 +400,9 @@ export async function changeUserPassword(
 }
 
 /**
- * إنشاء أو البحث عن حساب زائر بالبريد الإلكتروني للشراء السريع.
+ * إنشاء حساب زائر جديد بالبريد الإلكتروني للشراء السريع.
+ * ⚠️ أمان: إذا كان البريد مسجلاً مسبقاً، نرفض العملية ونطلب تسجيل الدخول
+ * لمنع اختراق الحسابات عبر إدخال بريد مستخدم آخر.
  */
 export async function findOrCreateGuestUser(rawEmail: string): Promise<User> {
   const email = rawEmail.trim().toLowerCase();
@@ -410,7 +412,13 @@ export async function findOrCreateGuestUser(rawEmail: string): Promise<User> {
     .where(eq(users.email, email))
     .limit(1);
 
-  if (existing) return existing;
+  if (existing) {
+    throw new AuthError(
+      "email_exists",
+      "هذا البريد مسجّل مسبقاً. سجّل الدخول بكلمة المرور لإتمام الشراء.",
+      409,
+    );
+  }
 
   const randomPassword = crypto.randomUUID();
   const passwordHash = await hashPassword(randomPassword);
