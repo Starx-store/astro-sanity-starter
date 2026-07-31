@@ -18,6 +18,7 @@ const T = {
     products: "المنتجات",
     news: "الأخبار والتحديثات",
     orders: "طلباتي",
+    terms: "الشروط والأحكام",
     how: "كيف يعمل",
     support: "الدعم",
     admin: "لوحة التحكم",
@@ -30,6 +31,7 @@ const T = {
     products: "Products",
     news: "News & Tips",
     orders: "My Orders",
+    terms: "Terms & Conditions",
     how: "How it works",
     support: "Support",
     admin: "Dashboard",
@@ -47,13 +49,12 @@ export async function SiteHeader() {
 
   const isNewsEnabled = (await getSetting<boolean>("feature.news_enabled", true)) !== false;
   const isSupportEnabled = (await getSetting<boolean>("feature.support_enabled", true)) !== false;
-  const isHowEnabled = (await getSetting<boolean>("feature.how_it_works_enabled", true)) !== false;
   const isWalletEnabled = (await getSetting<boolean>("feature.wallet_enabled", true)) !== false;
 
   const baseLinks = [
     { href: "/products", label: t.products, show: true },
     { href: "/news", label: t.news, show: isNewsEnabled },
-    { href: "/#how", label: t.how, show: isHowEnabled },
+    { href: "/terms", label: t.terms, show: true },
     { href: "/support", label: t.support, show: isSupportEnabled },
   ].filter((l) => l.show);
 

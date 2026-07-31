@@ -5,6 +5,8 @@ import { getSetting } from "@/server/settings/service";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert } from "@/components/ui/alert";
+import { SiteHeader } from "@/components/layout/site-header";
+import { SiteFooter } from "@/components/layout/site-footer";
 import { getLocale } from "@/server/locale";
 
 export const dynamic = "force-dynamic";
@@ -31,14 +33,18 @@ export default async function NewsPage({
 
   if (!isNewsEnabled) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center space-y-4">
-        <Alert tone="warning" className="justify-center text-base p-6">
-          <AlertCircle className="h-6 w-6 text-amber-500" />
-          <span>صفحة الأخبار والتحديثات معطّلة حالياً بقرار من الإدارة.</span>
-        </Alert>
-        <Link href="/" className="inline-block text-sm text-gold hover:underline font-bold">
-          العودة للصفحة الرئيسية ←
-        </Link>
+      <div className="flex min-h-screen flex-col bg-bg">
+        <SiteHeader />
+        <main className="flex-1 mx-auto max-w-4xl px-4 py-16 text-center space-y-4">
+          <Alert tone="warning" className="justify-center text-base p-6">
+            <AlertCircle className="h-6 w-6 text-amber-500" />
+            <span>صفحة الأخبار والتحديثات معطّلة حالياً بقرار من الإدارة.</span>
+          </Alert>
+          <Link href="/" className="inline-block text-sm text-gold hover:underline font-bold">
+            العودة للصفحة الرئيسية ←
+          </Link>
+        </main>
+        <SiteFooter />
       </div>
     );
   }
@@ -50,7 +56,9 @@ export default async function NewsPage({
   });
 
   return (
-    <div className="mx-auto max-w-5xl space-y-8 px-4 py-10">
+    <div className="flex min-h-screen flex-col bg-bg">
+      <SiteHeader />
+      <main className="flex-1 mx-auto max-w-5xl space-y-8 px-4 py-10 w-full">
       {/* Hero Header */}
       <div className="text-center space-y-3">
         <Badge tone="gold" className="px-3 py-1 text-xs font-bold gap-1">
@@ -163,6 +171,8 @@ export default async function NewsPage({
           })}
         </div>
       )}
+      </main>
+      <SiteFooter />
     </div>
   );
 }
