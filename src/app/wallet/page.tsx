@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { desc, eq } from "drizzle-orm";
-import { Wallet as WalletIcon, Lock, Coins } from "lucide-react";
+import { Wallet as WalletIcon, Lock, Coins, AlertCircle } from "lucide-react";
 import { requireUser } from "@/server/auth/current-user";
 import { db } from "@/server/db";
 import {
@@ -15,12 +16,14 @@ import { depositStatusLabel, depositMethodLabel } from "@/lib/labels";
 import { SiteHeader } from "@/components/layout/site-header";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Alert } from "@/components/ui/alert";
 import { DepositForm } from "@/components/wallet/deposit-form";
 import { BinanceDeposit } from "@/components/wallet/binance-deposit";
 import { CryptoDeposit } from "@/components/wallet/crypto-deposit";
 import { getCryptoConfig } from "@/server/wallet/crypto-deposits";
 import { getSelectedCurrency } from "@/server/currency";
 import { getLocale } from "@/server/locale";
+import { getSetting } from "@/server/settings/service";
 import { TxTable } from "@/components/wallet/tx-table";
 import { BankAccountsDisplay } from "@/components/wallet/bank-accounts-display";
 import { listActiveBankAccounts } from "@/server/bank-accounts/service";
