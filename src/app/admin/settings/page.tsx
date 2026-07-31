@@ -6,6 +6,13 @@ import { SettingsForm } from "@/components/admin/settings-form";
 import { ReconcileButton } from "@/components/admin/reconcile-button";
 import { BroadcastForm } from "@/components/admin/broadcast-form";
 
+import {
+  DEFAULT_TERMS_AR,
+  DEFAULT_TERMS_EN,
+  DEFAULT_PRIVACY_AR,
+  DEFAULT_PRIVACY_EN,
+} from "@/server/legal/defaults";
+
 export const dynamic = "force-dynamic";
 
 export default async function AdminSettingsPage() {
@@ -43,10 +50,10 @@ export default async function AdminSettingsPage() {
     "admin.fallback_email": String(s["admin.fallback_email"] ?? ""),
     "whatsapp.api_url": String(s["whatsapp.api_url"] ?? ""),
     "whatsapp.api_token": String(s["whatsapp.api_token"] ?? ""),
-    "legal.terms_ar": String(s["legal.terms_ar"] ?? ""),
-    "legal.terms_en": String(s["legal.terms_en"] ?? ""),
-    "legal.privacy_ar": String(s["legal.privacy_ar"] ?? ""),
-    "legal.privacy_en": String(s["legal.privacy_en"] ?? ""),
+    "legal.terms_ar": String(s["legal.terms_ar"] || DEFAULT_TERMS_AR),
+    "legal.terms_en": String(s["legal.terms_en"] || DEFAULT_TERMS_EN),
+    "legal.privacy_ar": String(s["legal.privacy_ar"] || DEFAULT_PRIVACY_AR),
+    "legal.privacy_en": String(s["legal.privacy_en"] || DEFAULT_PRIVACY_EN),
     "feature.news_enabled": s["feature.news_enabled"] !== false,
     "feature.support_enabled": s["feature.support_enabled"] !== false,
     "feature.referrals_enabled": s["feature.referrals_enabled"] !== false,

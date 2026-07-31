@@ -72,6 +72,8 @@ const T = {
   },
 } as const;
 
+import { DEFAULT_PRIVACY_AR, DEFAULT_PRIVACY_EN } from "@/server/legal/defaults";
+
 export default async function PrivacyPage() {
   const locale = await getLocale();
   const t = T[locale];
@@ -80,7 +82,7 @@ export default async function PrivacyPage() {
 
   const customPrivacyAr = await getSetting<string>("legal.privacy_ar", "");
   const customPrivacyEn = await getSetting<string>("legal.privacy_en", "");
-  const customPrivacy = isRtl ? customPrivacyAr : customPrivacyEn;
+  const privacyText = (isRtl ? customPrivacyAr : customPrivacyEn) || (isRtl ? DEFAULT_PRIVACY_AR : DEFAULT_PRIVACY_EN);
 
   return (
     <div className="flex min-h-screen flex-col bg-bg font-sans text-foreground">
@@ -112,20 +114,9 @@ export default async function PrivacyPage() {
 
           <Card className="border-border/70 shadow-lg">
             <CardContent className="space-y-8 p-6 sm:p-10">
-              {customPrivacy && customPrivacy.trim() ? (
-                <div className="prose max-w-none text-foreground/90 leading-relaxed whitespace-pre-line text-sm sm:text-base">
-                  {customPrivacy}
-                </div>
-              ) : (
-                t.sections.map((sec, idx) => (
-                  <div key={idx} className="space-y-2 border-b border-border/40 pb-6 last:border-0 last:pb-0">
-                    <h2 className="text-lg font-bold text-foreground sm:text-xl">{sec.title}</h2>
-                    <p className="whitespace-pre-line text-sm leading-relaxed text-muted sm:text-base">
-                      {sec.content}
-                    </p>
-                  </div>
-                ))
-              )}
+              <div className="prose max-w-none text-foreground/90 leading-relaxed whitespace-pre-line text-sm sm:text-base">
+                {privacyText}
+              </div>
             </CardContent>
           </Card>
         </div>
