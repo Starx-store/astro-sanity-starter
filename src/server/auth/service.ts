@@ -399,3 +399,39 @@ export async function changeUserPassword(
   await revokeAllSessions(userId);
 }
 
+/**
+ * إنشاء أو البحث عن حساب زائر بالبريد الإلكتروني للشراء السريع.
+ */
+export async function findOrCreateGuestUser(rawEmail: string): Promise<User> {
+  const email = rawEmail.trim().toLowerCase();
+  const [existing] = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1);
+
+  if (existing) return existing;
+
+  const randomPassword = crypto.randomUUID();
+  const passwordHash = await hashPassword(randomPassword);
+  const name = email.split("@")[0] || "عميل زائر";
+
+  const user = await db.transaction(async (tx) => {
+    const [u] = await tx
+      .insert(users)
+      .values({
+        name,
+        email,
+        passwordHash,
+        emailVerifiedAt: new Date(),
+      })
+      .returning();
+
+    await tx.insert(wallets).values({ userId: u.id, currency: "USD" });
+    return u;
+  });
+
+  await ensureReferralCode(user.id);
+  return user;
+}
+

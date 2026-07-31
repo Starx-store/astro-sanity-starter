@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ShoppingCart, X } from "lucide-react";
+import { ShoppingCart, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field } from "@/components/ui/field";
@@ -124,6 +124,7 @@ export function OrderBox(props: {
   const [formError, setFormError] = useState<string | null>(null);
   const [errCode, setErrCode] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
   const [checkingCoupon, setCheckingCoupon] = useState(false);
   const [couponError, setCouponError] = useState<string | null>(null);
   const [couponData, setCouponData] = useState<{
@@ -199,6 +200,10 @@ export function OrderBox(props: {
     setErrors({});
     setFormError(null);
     setErrCode(null);
+    if (!props.isLoggedIn && (!guestEmail.trim() || !guestEmail.includes("@"))) {
+      setFormError("يرجى إدخال بريد إلكتروني صحيح للشراء السريع.");
+      return;
+    }
     setIdemKey(crypto.randomUUID());
     setConfirming(true);
   }
@@ -219,6 +224,7 @@ export function OrderBox(props: {
           : undefined,
       inputs,
       couponCode: couponCode.trim() || undefined,
+      guestEmail: guestEmail.trim() || undefined,
       idempotencyKey: idemKey,
     });
     setLoading(false);
@@ -464,11 +470,42 @@ export function OrderBox(props: {
       {!props.orderable ? (
         <Alert tone="warning">{t.unavailable}</Alert>
       ) : !props.isLoggedIn ? (
-        <Link href={`/login?next=${encodeURIComponent(props.loginNext)}`} className="block">
-          <Button className="w-full" size="lg">
-            {t.loginToOrder}
+        <div className="space-y-3 rounded-2xl border border-gold/30 bg-gradient-to-br from-gold/10 via-surface-2/40 to-surface p-4 text-right shadow-lg">
+          <div className="flex items-center gap-2 text-gold font-black text-sm">
+            <Zap className="h-4 w-4 text-gold animate-bounce" />
+            <span>الشراء السريع للزوار (بدون كلمة سر)</span>
+          </div>
+          <Field label="أدخل بريدك الإلكتروني" htmlFor="guest-email" error={errors.guestEmail}>
+            <Input
+              id="guest-email"
+              type="email"
+              dir="ltr"
+              placeholder="yourname@gmail.com"
+              value={guestEmail}
+              onChange={(e) => {
+                setGuestEmail(e.target.value);
+                if (formError) setFormError(null);
+              }}
+            />
+          </Field>
+          <Button
+            className="w-full font-bold bg-gradient-to-r from-amber-500 via-gold to-gold-strong text-gold-foreground shadow-lg shadow-gold/20 hover:shadow-gold/30"
+            size="lg"
+            onClick={openConfirm}
+            disabled={preview === null || !guestEmail.trim()}
+          >
+            <ShoppingCart className="h-5 w-5" />
+            شراء الآن كـ زائر ⚡
           </Button>
-        </Link>
+          <div className="text-center pt-1 border-t border-border/40">
+            <Link
+              href={`/login?next=${encodeURIComponent(props.loginNext)}`}
+              className="text-xs font-semibold text-muted hover:text-gold hover:underline transition-colors"
+            >
+              أو سجّل الدخول بحسابك السابق ←
+            </Link>
+          </div>
+        </div>
       ) : (
         <Button
           className="w-full"

@@ -14,6 +14,8 @@ export const createOrderSchema = z.object({
   idempotencyKey: z.string().uuid("مفتاح الطلب غير صالح"),
   /** رمز كوبون اختياري. */
   couponCode: z.string().trim().max(40).optional(),
+  /** بريد الزائر للشراء السريع (بدون تسجيل مسبق). */
+  guestEmail: z.string().trim().email("بريد إلكتروني غير صالح").optional().or(z.literal("")),
 });
 
 export type CreateOrderInput = z.infer<typeof createOrderSchema>;
