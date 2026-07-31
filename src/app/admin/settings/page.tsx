@@ -43,6 +43,15 @@ export default async function AdminSettingsPage() {
     "admin.fallback_email": String(s["admin.fallback_email"] ?? ""),
     "whatsapp.api_url": String(s["whatsapp.api_url"] ?? ""),
     "whatsapp.api_token": String(s["whatsapp.api_token"] ?? ""),
+    "legal.terms_ar": String(s["legal.terms_ar"] ?? ""),
+    "legal.terms_en": String(s["legal.terms_en"] ?? ""),
+    "legal.privacy_ar": String(s["legal.privacy_ar"] ?? ""),
+    "legal.privacy_en": String(s["legal.privacy_en"] ?? ""),
+    "feature.news_enabled": s["feature.news_enabled"] !== false,
+    "feature.support_enabled": s["feature.support_enabled"] !== false,
+    "feature.referrals_enabled": s["feature.referrals_enabled"] !== false,
+    "feature.wallet_enabled": s["feature.wallet_enabled"] !== false,
+    "feature.how_it_works_enabled": s["feature.how_it_works_enabled"] !== false,
   };
 
   return (

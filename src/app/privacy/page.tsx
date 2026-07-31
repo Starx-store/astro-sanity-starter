@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getLocale } from "@/server/locale";
+import { getSetting } from "@/server/settings/service";
 
 export const dynamic = "force-dynamic";
 
@@ -60,39 +61,12 @@ const T = {
     subtitle: "We are committed to protecting your personal data and financial privacy with the highest security standards.",
     sections: [
       {
-        title: "1. Data We Collect",
-        content:
-          "We collect account registration data (name, email, phone), order details, wallet transaction logs, and essential technical metadata (IP address, browser type) for security purposes.",
+        title: "1. Information We Collect",
+        content: "We collect account details, order history, and wallet transactions securely.",
       },
       {
-        title: "2. How We Use Data",
-        content:
-          "Your data is used solely to process orders, manage your wallet, provide customer support, and improve platform reliability. We never use your data for unauthorized marketing.",
-      },
-      {
-        title: "3. Data Sharing",
-        content:
-          "We do not sell or share your personal data with third parties, except as strictly required to fulfill orders (e.g. sending target payload to fulfillment adapters) or where legally mandated.",
-      },
-      {
-        title: "4. Data Security & Ledger Safety",
-        content:
-          "Passwords are strictly hashed using bcrypt. All financial records are kept on an append-only immutable ledger. All web traffic is encrypted via HTTPS/TLS, with optional Two-Factor Authentication (2FA).",
-      },
-      {
-        title: "5. Cookies Policy",
-        content:
-          "We only use essential HTTP-only cookies necessary to maintain authenticated sessions. We do not employ third-party tracking or advertising cookies.",
-      },
-      {
-        title: "6. Your Rights",
-        content:
-          "You have the right to request access to your personal data, request corrections, or ask for account deletion via our support system at any time.",
-      },
-      {
-        title: "7. Contact Us",
-        content:
-          "For any privacy or data protection inquiries, please get in touch through our Support page.",
+        title: "2. How We Use Information",
+        content: "Your data is strictly used for order processing and account management.",
       },
     ],
   },
@@ -101,58 +75,61 @@ const T = {
 export default async function PrivacyPage() {
   const locale = await getLocale();
   const t = T[locale];
-  const BackIcon = locale === "ar" ? ArrowRight : ArrowLeft;
+  const isRtl = locale === "ar";
+  const ArrowIcon = isRtl ? ArrowRight : ArrowLeft;
+
+  const customPrivacyAr = await getSetting<string>("legal.privacy_ar", "");
+  const customPrivacyEn = await getSetting<string>("legal.privacy_en", "");
+  const customPrivacy = isRtl ? customPrivacyAr : customPrivacyEn;
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg">
+    <div className="flex min-h-screen flex-col bg-bg font-sans text-foreground">
       <SiteHeader />
-
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10">
-        {/* Header Navigation */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <Link href="/">
-            <Button size="sm" variant="ghost">
-              <BackIcon className="h-4 w-4" />
-              {t.backToHome}
-            </Button>
-          </Link>
-          <Badge tone="gold" className="gap-1">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            {t.updatedAt}
-          </Badge>
-        </div>
-
-        {/* Page Title & Banner */}
-        <div className="mb-8 rounded-xl border border-gold/30 bg-surface/50 p-8 text-center sm:text-right">
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-gold/10 text-gold">
-              <Lock className="h-7 w-7" />
-            </span>
-            <div>
-              <h1 className="text-2xl font-bold sm:text-3xl">{t.title}</h1>
-              <p className="mt-1 text-sm text-muted">{t.subtitle}</p>
-            </div>
+      <main className="flex-1">
+        <div className="mx-auto max-w-4xl px-4 py-12">
+          <div className="mb-8 flex items-center justify-between">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="gap-2 text-muted hover:text-foreground">
+                <ArrowIcon className="h-4 w-4" />
+                {t.backToHome}
+              </Button>
+            </Link>
+            <Badge tone="gold" className="px-3 py-1 text-xs">
+              {t.updatedAt}
+            </Badge>
           </div>
+
+          <div className="mb-10 space-y-3 text-center sm:text-right">
+            <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1 text-xs font-bold text-gold">
+              <Lock className="h-4 w-4" />
+              <span>حماية البيانات والخصوصية</span>
+            </div>
+            <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">{t.title}</h1>
+            <p className="max-w-2xl text-sm leading-relaxed text-muted sm:text-base">
+              {t.subtitle}
+            </p>
+          </div>
+
+          <Card className="border-border/70 shadow-lg">
+            <CardContent className="space-y-8 p-6 sm:p-10">
+              {customPrivacy && customPrivacy.trim() ? (
+                <div className="prose max-w-none text-foreground/90 leading-relaxed whitespace-pre-line text-sm sm:text-base">
+                  {customPrivacy}
+                </div>
+              ) : (
+                t.sections.map((sec, idx) => (
+                  <div key={idx} className="space-y-2 border-b border-border/40 pb-6 last:border-0 last:pb-0">
+                    <h2 className="text-lg font-bold text-foreground sm:text-xl">{sec.title}</h2>
+                    <p className="whitespace-pre-line text-sm leading-relaxed text-muted sm:text-base">
+                      {sec.content}
+                    </p>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
         </div>
-
-        {/* Privacy Sections */}
-        <Card>
-          <CardContent className="divide-y divide-border p-6 sm:p-8">
-            {t.sections.map((s, i) => (
-              <div key={i} className="py-6 first:pt-0 last:pb-0 space-y-2">
-                <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-gold" />
-                  {s.title}
-                </h2>
-                <p className="text-sm leading-relaxed text-muted leading-7">
-                  {s.content}
-                </p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
       </main>
-
       <SiteFooter />
     </div>
   );

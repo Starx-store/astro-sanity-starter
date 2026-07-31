@@ -12,6 +12,10 @@ import { Badge } from "@/components/ui/badge";
 import { NewTicketForm } from "@/components/support/new-ticket-form";
 import { getLocale } from "@/server/locale";
 
+import { getSetting } from "@/server/settings/service";
+import { Alert } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
+
 export const dynamic = "force-dynamic";
 
 const T = {
@@ -30,6 +34,24 @@ const T = {
 } as const;
 
 export default async function SupportPage() {
+  const isSupportEnabled = (await getSetting<boolean>("feature.support_enabled", true)) !== false;
+  if (!isSupportEnabled) {
+    return (
+      <div className="flex min-h-screen flex-col bg-bg">
+        <SiteHeader />
+        <main className="flex-1 mx-auto max-w-4xl px-4 py-16 text-center space-y-4">
+          <Alert tone="warning" className="justify-center text-base p-6">
+            <AlertCircle className="h-6 w-6 text-amber-500" />
+            <span>صفحة الدعم الفني معطّلة حالياً بقرار من الإدارة.</span>
+          </Alert>
+          <Link href="/" className="inline-block text-sm text-gold hover:underline font-bold">
+            العودة للصفحة الرئيسية ←
+          </Link>
+        </main>
+      </div>
+    );
+  }
+
   const user = await requireUser();
   const locale = await getLocale();
   const t = T[locale];

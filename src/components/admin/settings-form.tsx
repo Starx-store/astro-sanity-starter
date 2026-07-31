@@ -40,6 +40,15 @@ export function SettingsForm({
     "admin.fallback_email": string;
     "whatsapp.api_url": string;
     "whatsapp.api_token": string;
+    "legal.terms_ar": string;
+    "legal.terms_en": string;
+    "legal.privacy_ar": string;
+    "legal.privacy_en": string;
+    "feature.news_enabled": boolean;
+    "feature.support_enabled": boolean;
+    "feature.referrals_enabled": boolean;
+    "feature.wallet_enabled": boolean;
+    "feature.how_it_works_enabled": boolean;
   };
 }) {
   const router = useRouter();
@@ -383,17 +392,139 @@ export function SettingsForm({
         </Field>
       </div>
 
-      <div className="rounded-lg border border-border bg-surface-2/40 p-4 space-y-4">
-        <p className="mb-1 text-sm font-medium">SEO & Social</p>
-        
-        <Field label="وصف المتجر (Meta Description)" error={errors["store.meta_description"]}>
-          <textarea
-            className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-            rows={2}
-            value={f["store.meta_description"]}
-            onChange={(e) => setF({ ...f, "store.meta_description": e.target.value })}
-          />
-        </Field>
+      {/* التحكم في تفعيل وإيقاف الصفحات والميزات */}
+      <div className="rounded-xl border border-gold/30 bg-gold/5 p-5 space-y-4">
+        <div>
+          <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+            🎛️ التحكم بالصفحات والميزات (تشغيل / إيقاف)
+          </h3>
+          <p className="text-xs text-muted">
+            يمكنك تعطيل أي صفحة أو ميزة فجأة وسوف يختفي رابطها من الموقع وتُقفل تلقائياً.
+          </p>
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={f["feature.news_enabled"]}
+              onChange={(e) => setF({ ...f, "feature.news_enabled": e.target.checked })}
+              className="h-4 w-4 rounded border-border text-gold focus:ring-gold"
+            />
+            <div>
+              <span className="block text-sm font-bold">📰 صفحة الأخبار والنصائح (/news)</span>
+              <span className="block text-xs text-muted">تحديثات يومية ونصائح للعملاء</span>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={f["feature.support_enabled"]}
+              onChange={(e) => setF({ ...f, "feature.support_enabled": e.target.checked })}
+              className="h-4 w-4 rounded border-border text-gold focus:ring-gold"
+            />
+            <div>
+              <span className="block text-sm font-bold">🎧 صفحة الدعم والتذاكر (/support)</span>
+              <span className="block text-xs text-muted">تذاكر الدعم الفني والمساعدة</span>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={f["feature.referrals_enabled"]}
+              onChange={(e) => setF({ ...f, "feature.referrals_enabled": e.target.checked })}
+              className="h-4 w-4 rounded border-border text-gold focus:ring-gold"
+            />
+            <div>
+              <span className="block text-sm font-bold">🤝 نظام الإحالات والتسويق (/account)</span>
+              <span className="block text-xs text-muted">عمولات ودعوة الأصدقاء</span>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={f["feature.wallet_enabled"]}
+              onChange={(e) => setF({ ...f, "feature.wallet_enabled": e.target.checked })}
+              className="h-4 w-4 rounded border-border text-gold focus:ring-gold"
+            />
+            <div>
+              <span className="block text-sm font-bold">💳 صفحة المحفظة والشحن (/wallet)</span>
+              <span className="block text-xs text-muted">شحن الرصيد والسجل المالي</span>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 rounded-lg border border-border bg-surface p-3 cursor-pointer select-none sm:col-span-2">
+            <input
+              type="checkbox"
+              checked={f["feature.how_it_works_enabled"]}
+              onChange={(e) => setF({ ...f, "feature.how_it_works_enabled": e.target.checked })}
+              className="h-4 w-4 rounded border-border text-gold focus:ring-gold"
+            />
+            <div>
+              <span className="block text-sm font-bold">💡 قسم كيف يعمل المتجر (#how)</span>
+              <span className="block text-xs text-muted">خطوات الشراء السريع في الصفحة الرئيسية</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      {/* محرر الشروط والأحكام وسياسة الخصوصية */}
+      <div className="rounded-xl border border-border bg-surface-2/40 p-5 space-y-4">
+        <div>
+          <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+            📜 الشروط والأحكام وسياسة الخصوصية
+          </h3>
+          <p className="text-xs text-muted">
+            يمكنك كتابة وتعديل الشروط والأحكام والسياسات هنا وسوف تحدّث فوراً في صفحة /terms وصفحة /privacy وفي أسفل المتجر.
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field label="الشروط والأحكام (بالعربية)">
+            <textarea
+              className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring font-sans"
+              rows={6}
+              placeholder="أدخل نص الشروط والأحكام هنا..."
+              value={f["legal.terms_ar"]}
+              onChange={(e) => setF({ ...f, "legal.terms_ar": e.target.value })}
+            />
+          </Field>
+
+          <Field label="Terms & Conditions (English)">
+            <textarea
+              dir="ltr"
+              className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring font-sans"
+              rows={6}
+              placeholder="Enter terms and conditions in English..."
+              value={f["legal.terms_en"]}
+              onChange={(e) => setF({ ...f, "legal.terms_en": e.target.value })}
+            />
+          </Field>
+
+          <Field label="سياسة الخصوصية (بالعربية)">
+            <textarea
+              className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring font-sans"
+              rows={6}
+              placeholder="أدخل نص سياسة الخصوصية هنا..."
+              value={f["legal.privacy_ar"]}
+              onChange={(e) => setF({ ...f, "legal.privacy_ar": e.target.value })}
+            />
+          </Field>
+
+          <Field label="Privacy Policy (English)">
+            <textarea
+              dir="ltr"
+              className="w-full rounded-lg border border-border bg-input px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring font-sans"
+              rows={6}
+              placeholder="Enter privacy policy in English..."
+              value={f["legal.privacy_en"]}
+              onChange={(e) => setF({ ...f, "legal.privacy_en": e.target.value })}
+            />
+          </Field>
+        </div>
       </div>
 
       <Button type="submit" loading={loading}>

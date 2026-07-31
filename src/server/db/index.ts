@@ -90,6 +90,24 @@ client`CREATE TABLE IF NOT EXISTS bank_accounts (
   updated_at TIMESTAMPTZ DEFAULT NOW()
 )`.catch(() => {});
 
+client`DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'news_category') THEN
+        CREATE TYPE news_category AS ENUM ('update', 'tip', 'news');
+    END IF;
+END $$;`.catch(() => {});
+
+client`CREATE TABLE IF NOT EXISTS news_articles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  category news_category NOT NULL DEFAULT 'news',
+  image_url TEXT,
+  is_pinned BOOLEAN NOT NULL DEFAULT false,
+  published_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
+)`.catch(() => {});
+
 export const db = drizzle(client, { schema });
 export { schema };
 export type Database = typeof db;

@@ -40,6 +40,15 @@ export async function POST(req: Request) {
       setSetting("admin.fallback_email", parsed.data["admin.fallback_email"] ?? ""),
       setSetting("whatsapp.api_url", parsed.data["whatsapp.api_url"] ?? ""),
       setSetting("whatsapp.api_token", parsed.data["whatsapp.api_token"] ?? ""),
+      setSetting("legal.terms_ar", parsed.data["legal.terms_ar"] ?? ""),
+      setSetting("legal.terms_en", parsed.data["legal.terms_en"] ?? ""),
+      setSetting("legal.privacy_ar", parsed.data["legal.privacy_ar"] ?? ""),
+      setSetting("legal.privacy_en", parsed.data["legal.privacy_en"] ?? ""),
+      setSetting("feature.news_enabled", parsed.data["feature.news_enabled"] ?? true),
+      setSetting("feature.support_enabled", parsed.data["feature.support_enabled"] ?? true),
+      setSetting("feature.referrals_enabled", parsed.data["feature.referrals_enabled"] ?? true),
+      setSetting("feature.wallet_enabled", parsed.data["feature.wallet_enabled"] ?? true),
+      setSetting("feature.how_it_works_enabled", parsed.data["feature.how_it_works_enabled"] ?? true),
     ]);
     return jsonOk({ saved: true });
   } catch (err) {

@@ -65,11 +65,25 @@ export const settingsSchema = z.object({
     .max(20, "كود الإحالة طويل جداً")
     .optional()
     .or(z.literal("")),
+  // إتاحة التسجيل والدخول
   "auth.register_phone_required": z.boolean().default(true),
   "auth.allow_registration": z.boolean().default(true),
-  "admin.fallback_email": z.string().trim().email("بريد إلكتروني غير صالح").optional().or(z.literal("")),
-  "whatsapp.api_url": z.string().trim().url("رابط غير صالح").optional().or(z.literal("")),
-  "whatsapp.api_token": z.string().trim().optional().or(z.literal("")),
+  "admin.fallback_email": z.string().trim().max(100).optional().or(z.literal("")),
+  "whatsapp.api_url": z.string().trim().max(200).optional().or(z.literal("")),
+  "whatsapp.api_token": z.string().trim().max(200).optional().or(z.literal("")),
+
+  // الشروط والأحكام وسياسة الخصوصية
+  "legal.terms_ar": z.string().optional().or(z.literal("")),
+  "legal.terms_en": z.string().optional().or(z.literal("")),
+  "legal.privacy_ar": z.string().optional().or(z.literal("")),
+  "legal.privacy_en": z.string().optional().or(z.literal("")),
+
+  // التحكم في تفعيل وإيقاف الصفحات والميزات
+  "feature.news_enabled": z.boolean().default(true),
+  "feature.support_enabled": z.boolean().default(true),
+  "feature.referrals_enabled": z.boolean().default(true),
+  "feature.wallet_enabled": z.boolean().default(true),
+  "feature.how_it_works_enabled": z.boolean().default(true),
 });
 
 export type SettingsInput = z.infer<typeof settingsSchema>;

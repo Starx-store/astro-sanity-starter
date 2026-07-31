@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getLocale } from "@/server/locale";
+import { getSetting } from "@/server/settings/service";
 
 export const dynamic = "force-dynamic";
 
@@ -59,60 +60,39 @@ const T = {
       {
         title: "٩. التواصل والدعم الفني",
         content:
-          "لأي استفسار بخصوص طرق الدفع أو الشروط، يمكنك التواصل معنا عبر صفحة الدعم الفني أو محادثة واتساب المباشرة.",
+          "لأي استفسارات حول الشروط أو المشتريات، يمكنك التواصل معنا عبر نظام التذاكر في المتجر أو عبر واتساب الدعم الفني المباشر.",
       },
     ],
   },
   en: {
-    title: "Terms, Conditions & Payment Methods",
+    title: "Terms & Conditions & Payment Methods",
     updatedAt: "Last updated: July 2026",
-    backToHome: "Back to Home",
-    subtitle: "Please read the terms, conditions, and accepted payment methods of Evo Store carefully before using our services.",
+    backToHome: "Back to home",
+    subtitle: "Please read terms and conditions carefully before using our services.",
     sections: [
       {
         title: "1. Introduction",
-        content:
-          "By using Evo Store, you agree to be bound by these terms and conditions. If you do not agree to any part of them, please do not use the website.",
+        content: "By using Evo Store, you agree to comply with these terms.",
       },
       {
         title: "2. Nature of Service",
-        content:
-          "Evo Store is a platform for selling digital products and services (subscriptions, game top-ups, social media services, cards & credits) via a built-in wallet pre-funded by the customer.",
+        content: "Evo Store provides digital products and services via internal wallet.",
       },
       {
-        title: "3. Accepted Payment & Top-up Methods",
-        content:
-          "Evo Store supports multiple secure payment methods to top up your wallet:\n• Direct Bank Transfers (to official accounts listed in your Wallet page).\n• Instant automated payments via Binance Pay (USDT/Crypto).\n• Direct Cryptocurrency deposits on the BEP20 network (USDT / USDC / BUSD).\n• Direct manual top-ups via Admin & Customer Support.",
+        title: "3. Payment Methods",
+        content: "We accept Bank Transfer, Binance Pay, and BEP20 Crypto Deposits.",
       },
       {
-        title: "4. Wallet Ledger & Security",
-        content:
-          "All top-up and purchase operations are permanently logged on an immutable ledger and cannot be deleted or modified, guaranteeing maximum financial security.",
+        title: "4. Wallet System",
+        content: "All transactions are append-only and audited.",
       },
       {
         title: "5. Orders & Pricing",
-        content:
-          "All displayed prices are estimates; final prices are calculated by the server upon order confirmation. Upon confirmation, the amount is held from your available wallet balance until completion or cancellation.",
+        content: "Final prices are calculated on server side upon checkout.",
       },
       {
-        title: "6. Refunds & Cancellations",
-        content:
-          "Orders can be cancelled before execution begins. If execution fails from Evo Store or the provider, held funds are automatically released back to your available balance. No refunds are accepted after successful order completion unless a technical glitch is proven.",
-      },
-      {
-        title: "7. Customer Responsibility",
-        content:
-          "The customer is responsible for the accuracy of input data (such as account links or delivery info). Evo Store bears no responsibility for errors caused by incorrect customer input.",
-      },
-      {
-        title: "8. Amendments",
-        content:
-          "Evo Store reserves the right to amend these terms or update available payment methods at any time.",
-      },
-      {
-        title: "9. Support & Contact",
-        content:
-          "For any inquiries regarding payment methods or terms, please reach out via our Support page or direct WhatsApp chat.",
+        title: "6. Refund Policy",
+        content: "Refunds are processed automatically if order fails before delivery.",
       },
     ],
   },
@@ -121,58 +101,61 @@ const T = {
 export default async function TermsPage() {
   const locale = await getLocale();
   const t = T[locale];
-  const BackIcon = locale === "ar" ? ArrowRight : ArrowLeft;
+  const isRtl = locale === "ar";
+  const ArrowIcon = isRtl ? ArrowRight : ArrowLeft;
+
+  const customTermsAr = await getSetting<string>("legal.terms_ar", "");
+  const customTermsEn = await getSetting<string>("legal.terms_en", "");
+  const customTerms = isRtl ? customTermsAr : customTermsEn;
 
   return (
-    <div className="flex min-h-screen flex-col bg-bg">
+    <div className="flex min-h-screen flex-col bg-bg font-sans text-foreground">
       <SiteHeader />
-
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-10">
-        {/* Header Navigation */}
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <Link href="/">
-            <Button size="sm" variant="ghost">
-              <BackIcon className="h-4 w-4" />
-              {t.backToHome}
-            </Button>
-          </Link>
-          <Badge tone="gold" className="gap-1">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            {t.updatedAt}
-          </Badge>
-        </div>
-
-        {/* Page Title & Banner */}
-        <div className="mb-8 rounded-xl border border-gold/30 bg-surface/50 p-8 text-center sm:text-right">
-          <div className="flex flex-col sm:flex-row items-center gap-4">
-            <span className="grid h-14 w-14 shrink-0 place-items-center rounded-xl bg-gold/10 text-gold">
-              <CreditCard className="h-7 w-7" />
-            </span>
-            <div>
-              <h1 className="text-2xl font-bold sm:text-3xl">{t.title}</h1>
-              <p className="mt-1 text-sm text-muted">{t.subtitle}</p>
-            </div>
+      <main className="flex-1">
+        <div className="mx-auto max-w-4xl px-4 py-12">
+          <div className="mb-8 flex items-center justify-between">
+            <Link href="/">
+              <Button variant="ghost" size="sm" className="gap-2 text-muted hover:text-foreground">
+                <ArrowIcon className="h-4 w-4" />
+                {t.backToHome}
+              </Button>
+            </Link>
+            <Badge tone="gold" className="px-3 py-1 text-xs">
+              {t.updatedAt}
+            </Badge>
           </div>
-        </div>
 
-        {/* Terms Sections */}
-        <Card>
-          <CardContent className="divide-y divide-border p-6 sm:p-8">
-            {t.sections.map((s, i) => (
-              <div key={i} className="py-6 first:pt-0 last:pb-0 space-y-2">
-                <h2 className="text-base sm:text-lg font-bold text-foreground flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-gold" />
-                  {s.title}
-                </h2>
-                <div className="text-sm leading-relaxed text-muted leading-7 whitespace-pre-line">
-                  {s.content}
+          <div className="mb-10 space-y-3 text-center sm:text-right">
+            <div className="inline-flex items-center gap-2 rounded-full border border-gold/30 bg-gold/10 px-4 py-1 text-xs font-bold text-gold">
+              <FileText className="h-4 w-4" />
+              <span>اتفاقية الاستخدام والخدمة</span>
+            </div>
+            <h1 className="text-3xl font-extrabold text-foreground sm:text-4xl">{t.title}</h1>
+            <p className="max-w-2xl text-sm leading-relaxed text-muted sm:text-base">
+              {t.subtitle}
+            </p>
+          </div>
+
+          <Card className="border-border/70 shadow-lg">
+            <CardContent className="space-y-8 p-6 sm:p-10">
+              {customTerms && customTerms.trim() ? (
+                <div className="prose max-w-none text-foreground/90 leading-relaxed whitespace-pre-line text-sm sm:text-base">
+                  {customTerms}
                 </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
+              ) : (
+                t.sections.map((sec, idx) => (
+                  <div key={idx} className="space-y-2 border-b border-border/40 pb-6 last:border-0 last:pb-0">
+                    <h2 className="text-lg font-bold text-foreground sm:text-xl">{sec.title}</h2>
+                    <p className="whitespace-pre-line text-sm leading-relaxed text-muted sm:text-base">
+                      {sec.content}
+                    </p>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </main>
-
       <SiteFooter />
     </div>
   );

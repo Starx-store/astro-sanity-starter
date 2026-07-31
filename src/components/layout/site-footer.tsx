@@ -34,8 +34,11 @@ export async function SiteFooter() {
             </p>
           </div>
           <nav className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted">
-            <Link href="/#products" className="hover:text-foreground">
+            <Link href="/products" className="hover:text-foreground">
               {t.products}
+            </Link>
+            <Link href="/news" className="hover:text-foreground font-semibold text-gold">
+              📰 {t.news || "الأخبار والتحديثات"}
             </Link>
             <Link href="/support" className="hover:text-foreground">
               {t.support}

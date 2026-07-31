@@ -5,15 +5,18 @@ import { Button } from "@/components/ui/button";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { CurrencySwitcher } from "@/components/store/currency-switcher";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { CurtainToggle } from "@/components/layout/curtain-toggle";
 import { getSessionUser } from "@/server/auth/session";
 import { isStaffOrAdmin } from "@/server/auth/rbac";
 import { getDisplayCurrencies, CURRENCY_COOKIE } from "@/server/currency";
 import { getLocale } from "@/server/locale";
+import { getSetting } from "@/server/settings/service";
 import { LangToggle } from "@/components/layout/lang-toggle";
 
 const T = {
   ar: {
     products: "المنتجات",
+    news: "الأخبار والتحديثات",
     orders: "طلباتي",
     how: "كيف يعمل",
     support: "الدعم",
@@ -25,6 +28,7 @@ const T = {
   },
   en: {
     products: "Products",
+    news: "News & Tips",
     orders: "My Orders",
     how: "How it works",
     support: "Support",
@@ -40,14 +44,23 @@ export async function SiteHeader() {
   const user = await getSessionUser();
   const locale = await getLocale();
   const t = T[locale];
-  const navLinks = [
-    { href: "/products", label: t.products },
-    { href: "/#how", label: t.how },
-    { href: "/support", label: t.support },
-  ];
+
+  const isNewsEnabled = (await getSetting<boolean>("feature.news_enabled", true)) !== false;
+  const isSupportEnabled = (await getSetting<boolean>("feature.support_enabled", true)) !== false;
+  const isHowEnabled = (await getSetting<boolean>("feature.how_it_works_enabled", true)) !== false;
+  const isWalletEnabled = (await getSetting<boolean>("feature.wallet_enabled", true)) !== false;
+
+  const baseLinks = [
+    { href: "/products", label: t.products, show: true },
+    { href: "/news", label: t.news, show: isNewsEnabled },
+    { href: "/#how", label: t.how, show: isHowEnabled },
+    { href: "/support", label: t.support, show: isSupportEnabled },
+  ].filter((l) => l.show);
+
   const links = user
-    ? [navLinks[0], { href: "/orders", label: t.orders }, ...navLinks.slice(1)]
-    : navLinks;
+    ? [baseLinks[0], { href: "/orders", label: t.orders, show: true }, ...baseLinks.slice(1)]
+    : baseLinks;
+
   const currencies = await getDisplayCurrencies();
   const selectedCurrency = (await cookies()).get(CURRENCY_COOKIE)?.value ?? "USD";
 
@@ -78,7 +91,7 @@ export async function SiteHeader() {
             selected={selectedCurrency}
           />
           {user ? (
-            <>
+            <CurtainToggle>
               {isStaffOrAdmin(user) && (
                 <Link href="/admin" className="hidden sm:block">
                   <Button variant="ghost" size="sm">
@@ -87,17 +100,19 @@ export async function SiteHeader() {
                 </Link>
               )}
               <NotificationBell />
-              <Link href="/wallet">
-                <Button variant="outline" size="sm">
-                  {t.wallet}
-                </Button>
-              </Link>
+              {isWalletEnabled && (
+                <Link href="/wallet">
+                  <Button variant="outline" size="sm">
+                    {t.wallet}
+                  </Button>
+                </Link>
+              )}
               <Link href="/account">
                 <Button size="sm">{t.account}</Button>
               </Link>
-            </>
+            </CurtainToggle>
           ) : (
-            <>
+            <CurtainToggle>
               <Link href="/login">
                 <Button variant="ghost" size="sm">
                   {t.login}
@@ -106,7 +121,7 @@ export async function SiteHeader() {
               <Link href="/register">
                 <Button size="sm">{t.register}</Button>
               </Link>
-            </>
+            </CurtainToggle>
           )}
         </div>
       </div>

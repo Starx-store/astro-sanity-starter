@@ -80,6 +80,24 @@ const T = {
 } as const;
 
 export default async function WalletPage() {
+  const isWalletEnabled = (await getSetting<boolean>("feature.wallet_enabled", true)) !== false;
+  if (!isWalletEnabled) {
+    return (
+      <div className="flex min-h-screen flex-col bg-bg">
+        <SiteHeader />
+        <main className="flex-1 mx-auto max-w-4xl px-4 py-16 text-center space-y-4">
+          <Alert tone="warning" className="justify-center text-base p-6">
+            <AlertCircle className="h-6 w-6 text-amber-500" />
+            <span>صفحة المحفظة والشحن معطّلة حالياً بقرار من الإدارة.</span>
+          </Alert>
+          <Link href="/" className="inline-block text-sm text-gold hover:underline font-bold">
+            العودة للصفحة الرئيسية ←
+          </Link>
+        </main>
+      </div>
+    );
+  }
+
   const user = await requireUser();
   const locale = await getLocale();
   const t = T[locale];

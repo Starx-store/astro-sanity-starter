@@ -15,6 +15,7 @@ const tabs: Array<{ href: string; label: string; permission?: Permission }> = [
   { href: "/admin/categories", label: "التصنيفات", permission: PERMISSIONS.productsEdit },
   { href: "/admin/providers", label: "المزوّدون", permission: PERMISSIONS.providersManage },
   { href: "/admin/coupons", label: "الكوبونات", permission: PERMISSIONS.settingsEdit },
+  { href: "/admin/news", label: "الأخبار والتحديثات", permission: PERMISSIONS.settingsEdit },
   { href: "/admin/referrals", label: "الإحالات والمسوقين", permission: PERMISSIONS.usersView },
   { href: "/admin/bank-accounts", label: "الحسابات البنكية", permission: PERMISSIONS.settingsEdit },
   { href: "/admin/support", label: "الدعم", permission: PERMISSIONS.supportManage },

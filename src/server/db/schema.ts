@@ -52,6 +52,12 @@ export const verificationChannel = pgEnum("verification_channel", [
   "phone",
 ]);
 
+export const newsCategory = pgEnum("news_category", [
+  "update",
+  "tip",
+  "news",
+]);
+
 export const txType = pgEnum("wallet_tx_type", [
   "deposit",
   "purchase",
@@ -987,6 +993,18 @@ export const referralEarnings = pgTable("referral_earnings", {
   referralIdx: index("referral_earnings_referral_idx").on(t.referralId),
 }));
 
+export const newsArticles = pgTable("news_articles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  category: newsCategory("category").notNull().default("news"),
+  imageUrl: text("image_url"),
+  isPinned: boolean("is_pinned").notNull().default(false),
+  publishedAt: timestamp("published_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+});
+
 /* ------------------------------------------------------------------ */
 /*  أنواع مشتقّة للاستخدام في التطبيق                                  */
 /* ------------------------------------------------------------------ */
@@ -1008,3 +1026,5 @@ export type Product = typeof products.$inferSelect;
 export type BankAccount = typeof bankAccounts.$inferSelect;
 export type Referral = typeof referrals.$inferSelect;
 export type ReferralEarning = typeof referralEarnings.$inferSelect;
+export type NewsArticle = typeof newsArticles.$inferSelect;
+export type NewNewsArticle = typeof newsArticles.$inferInsert;
